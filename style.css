@@ -1,0 +1,181 @@
+body {
+    font-family: sans-serif;
+    background-color: #f4f7f6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+
+h1 {
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+label {
+    display: block;
+    text-align: left;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; /* Inclut padding et border dans la largeur */
+}
+
+button {
+    background-color: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+.parrain-info {
+    color: #007bff;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+/* --- NOUVELLES RÈGLES POUR LE TÉLÉPHONE --- */
+
+.phone-group {
+    display: flex; /* Active l'alignement côte à côte */
+    gap: 10px;    /* Ajoute un espacement entre les deux champs */
+    margin-bottom: 10px;
+}
+
+#indicatif {
+    flex: 0 0 40%; /* L'indicatif prend 40% de la largeur du groupe */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#telephone {
+    flex: 1; /* Le champ de numéro prend l'espace restant */
+}
+
+/* Assurez-vous que l'input[type="tel"] est aussi stylisé */
+input[type="tel"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+/* --- Styles pour la Page d'Accueil (home.html) --- */
+
+header {
+    background-color: #007bff;
+    color: white;
+    padding: 15px 0;
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+header h1 {
+    margin: 0;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: bold;
+}
+
+.hero {
+    background-color: #e9ecef;
+    padding: 60px 0;
+    text-align: center;
+}
+
+.hero h2 {
+    color: #007bff;
+    font-size: 2.5em;
+}
+
+.cta-button {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 15px 30px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+
+.cta-button:hover {
+    background-color: #218838;
+}
+
+.features {
+    padding: 40px 0;
+    text-align: center;
+}
+
+.feature-grid {
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.feature-item {
+    flex: 1;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.feature-item h4 {
+    color: #007bff;
+    margin-top: 0;
+}
+
+footer {
+    background-color: #343a40;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+}
+
