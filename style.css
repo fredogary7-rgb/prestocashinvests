@@ -179,3 +179,68 @@ footer {
     padding: 15px 0;
 }
 
+/* --- Styles pour la section Dépôt & Retrait --- */
+
+.transaction-box {
+    margin-top: 25px;
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.payment-methods {
+    display: flex;
+    flex-wrap: wrap; /* Permet aux cartes de passer à la ligne sur petit écran */
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.method-card {
+    flex: 1 1 30%; /* Chaque carte prend environ 30% de la largeur */
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.method-card h4 {
+    color: #007bff;
+    margin-top: 0;
+}
+
+.crypto {
+    border-left: 5px solid #ffc107; /* Bordure jaune pour la crypto */
+}
+
+.crypto-address {
+    font-size: 0.8em;
+    word-break: break-all; /* Important pour les longues adresses */
+}
+
+.copy-btn {
+    background-color: #6c757d;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    width: auto;
+    margin-top: 10px;
+}
+
+.commission-info {
+    padding: 20px;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+}
+
+.commission-info h3 {
+    color: #155724;
+    margin-top: 0;
+}
+
