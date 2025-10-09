@@ -1,26 +1,47 @@
 body {
-    font-family: sans-serif;
-    background-color: #f4f7f6;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
+    font-family: 'Roboto', Arial, sans-serif; /* Utiliser une police claire */
+    background-color: #f0f4f9; /* Nouveau fond clair */
+    /* ... le reste de vos règles body ... */
 }
 
 .container {
-    background-color: white;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    width: 100%;
-    text-align: center;
+    /* Conserve le centrage et la max-width */
+    h1 {
+    color: #2875f5; /* Nouveau bleu vif */
+    margin-bottom: 10px;
+.container {
+    /* ... centrage ... */
+    border-radius: 12px; /* Coins arrondis pour le conteneur principal de l'inscription */
 }
 
-h1 {
-    color: #007bff;
-    margin-bottom: 10px;
+.stat-card, .offer-card, .method-card, .referral-link-box {
+    border-radius: 12px; /* Coins arrondis pour les cartes */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Ombre plus visible */
+    border: none; /* Enlever les bordures fines si elles existent */
+}
+
+/* Ajustez la carte stat-card pour le bleu dominant */
+.stat-card {
+    background-color: white; /* Fond de carte blanc */
+    border-left: none; /* Enlever la bordure gauche pour un look plus épuré */
+    border-top: 5px solid #2875f5; /* Une fine bordure en haut ou en bas pour l'accent */
+}
+
+
+}
+
+/* Modifiez l'arrière-plan du dashboard-header */
+.dashboard-header {
+    background-color: #2875f5; 
+    /* ... */
+}
+
+/* Modifiez la couleur du bouton de copie (copy-btn) */
+.link-input-group button {
+    background-color: #2875f5; 
+    /* ... */
+}
+
 }
 
 label {
@@ -242,5 +263,58 @@ footer {
 .commission-info h3 {
     color: #155724;
     margin-top: 0;
+}
+
+/* --- Styles pour la Liste des Offres (offers.html) --- */
+
+.offer-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
+    border-left: 5px solid #28a745; /* Bordure verte pour attirer l'oeil */
+}
+
+.offer-card h4 {
+    color: #28a745;
+    margin-top: 0;
+    font-size: 1.5em;
+}
+
+.offer-card .description {
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+.offer-card .details {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
+.details .commission {
+    color: #dc3545; /* Rouge pour la commission élevée */
+    font-weight: bold;
+}
+
+.cta-link {
+    display: block;
+    text-align: center;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 0;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.cta-link:hover {
+    background-color: #0056b3;
 }
 
