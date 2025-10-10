@@ -276,3 +276,144 @@ input::placeholder {
     text-align: center;
 }
 
+/* --- Styles pour le Nouveau Tableau de Bord (Inspiré de l'image) --- */
+
+/* 1. Section Bienvenue et Stats Rapides */
+.welcome-box {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px var(--shadow-light);
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.welcome-box .user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.welcome-box .user-info p {
+    margin: 0;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.user-avatar {
+    font-size: 2em;
+    margin-right: 15px;
+    background-color: #e6e6fa; /* Légère couleur de fond pour l'avatar */
+    border-radius: 50%;
+    padding: 5px;
+}
+
+.quick-stats-row {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.quick-stat {
+    flex: 1;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+}
+
+.quick-stat h4 {
+    margin: 0;
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.quick-stat .stat-value {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-top: 5px;
+    margin-bottom: 0;
+    color: white; /* Assurez-vous que le texte de valeur est blanc */
+}
+
+.stat-expense {
+    background-color: #6a5acd; /* Violet/Bleu pour les dépenses */
+}
+
+.stat-benefit {
+    background-color: var(--button-green); /* Vert pour les bénéfices */
+}
+
+/* 2. Cartes Principales (Grid et Styles des Cartes) */
+.main-cards-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr; /* Une colonne sur mobile */
+    margin-bottom: 25px;
+}
+
+@media (min-width: 600px) {
+    .main-cards-grid {
+        grid-template-columns: 1fr 1fr; /* Deux colonnes sur tablette/desktop */
+    }
+}
+
+.info-card {
+    background-color: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px var(--shadow-light);
+    text-align: left;
+    color: white; /* Texte principal blanc sur fond coloré */
+    position: relative;
+    overflow: hidden; /* Pour l'effet de coin */
+}
+
+.info-card h4 {
+    margin-top: 0;
+    font-size: 1.1em;
+    font-weight: 500;
+    color: white;
+}
+
+.info-card .description {
+    font-size: 0.8em;
+    opacity: 0.8;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.info-card .card-value {
+    font-size: 2.2em;
+    font-weight: bold;
+    margin: 0;
+    color: white;
+}
+
+/* Couleurs des Cartes */
+.blue-card {
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+}
+
+.red-card {
+    background: linear-gradient(135deg, #e64a4a, #cc3737); /* Rouge pour Retraits */
+}
+
+.green-card {
+    background: linear-gradient(135deg, #38b000, #28a745); /* Vert pour Bonus */
+}
+
+.info-card-commission {
+    background: white; /* Carte d'info reste blanche */
+    color: var(--text-dark); /* Texte redevient sombre */
+    border: 2px dashed var(--primary-blue);
+    text-align: center;
+}
+
+.info-card-commission h4 {
+    color: var(--primary-blue);
+}
+.info-card-commission .description {
+    color: var(--text-dark);
+}
+
