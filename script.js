@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
         
         // SIMULATION : Une fois que le serveur confirme l'inscription :
         
-        // Nouvelle ligne : Redirection en incluant le nom du dossier du dépôt
-window.location.href = './success.html'; 
+        // // Nouvelle ligne : Utilise le chemin absolu à partir de la racine du dépôt
+window.location.href = '/prestocashinvests/success.html';
 
 }); // Fin du DOMContentLoaded
 
