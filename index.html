@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Rejoignez la Communauté !</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Devenez Membre et Gagnez !</h1>
+        <p>Inscrivez-vous aujourd'hui pour accéder à nos meilleures opportunités d'affiliation.</p>
+       
+
+<form id="inscriptionForm">
+    <input type="hidden" id="parrainCode" name="parrain_code" value="">
+    
+    <label for="nom">Nom d'utilisateur</label>
+    <input type="text" id="nom" name="nom" required>
+    
+    <label for="email">Adresse E-mail</label>
+    <input type="email" id="email" name="email" required>
+    
+    <label>Numéro de Téléphone</label>
+    <div class="phone-group">
+        <select id="indicatif" name="indicatif" required>
+            <option value="">Pays</option>
+            <option value="+228">🇹🇬 Togo (+228)</option>
+            <option value="+229">🇧🇯 Bénin (+229)</option>
+            <option value="+225">🇨🇮 Côte d'Ivoire (+225)</option>
+            <option value="+237">🇨🇲 Cameroun (+237)</option>
+            <option value="+221">🇸🇳 Sénégal (+221)</option>
+            <option value="+223">🇲🇱 Mali (+223)</option>
+            <option value="+241">🇬🇦 Gabon (+241)</option>
+        </select>
+        <input type="tel" id="telephone" name="telephone" placeholder="Ex: 99 88 77 66" required>
+    </div>
+    
+    <label for="motdepasse">Mot de passe</label>
+    <input type="password" id="motdepasse" name="motdepasse" required>
+    
+    <p id="parrainDisplay" class="parrain-info"></p>
+    
+    <button type="submit">S'inscrire Maintenant</button>
+</form>
+
