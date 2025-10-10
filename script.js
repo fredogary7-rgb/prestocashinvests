@@ -21,16 +21,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
         console.log("Pas de code de parrainage trouvé dans l'URL.");
     }
     
-    // 4. Gestion de la soumission du formulaire (pour le test)
+        // 4. Gestion de la soumission du formulaire (Simulation de backend)
     const form = document.getElementById('inscriptionForm');
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const code = document.getElementById('parrainCode').value;
-        alert(`Inscription soumise. Code de parrainage envoyé au serveur : ${code || 'Aucun'}`);
+        // **Ici, en production, le code enverrait les données au serveur**
         
-        // Normalement ici, vous enverriez ces données à votre backend (serveur)
+        // SIMULATION : Une fois que le serveur confirme l'inscription :
+        
+        // Redirection vers la page de succès
+        window.location.href = 'success.html'; 
     });
+}); // Fin du DOMContentLoaded
+
 });
 
 // Fonction générique de copie (pour numéros de téléphone)

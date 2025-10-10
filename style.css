@@ -318,3 +318,44 @@ footer {
     background-color: #0056b3;
 }
 
+/* --- Styles pour la Page de Succès (success.html) --- */
+
+.success-container {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.success-icon {
+    font-size: 5em;
+    margin-bottom: 20px;
+    color: #00c087; /* Utilise la couleur d'action/succès */
+}
+
+h2 {
+    color: #2875f5;
+    margin-bottom: 15px;
+}
+
+.success-message {
+    font-size: 1.1em;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.secondary-button {
+    display: inline-block;
+    background-color: #6c757d; /* Gris pour une action secondaire */
+    color: white;
+    padding: 12px 25px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-left: 10px;
+    transition: background-color 0.3s;
+}
+
+.secondary-button:hover {
+    background-color: #5a6268;
+}
+
