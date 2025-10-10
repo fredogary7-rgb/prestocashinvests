@@ -21,18 +21,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
         console.log("Pas de code de parrainage trouvé dans l'URL.");
     }
     
-        // 4. Gestion de la soumission du formulaire (Simulation de backend)
+            // 4. Gestion de la soumission du formulaire (Simulation de backend)
     const form = document.getElementById('inscriptionForm');
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // **Ici, en production, le code enverrait les données au serveur**
-        
-        // SIMULATION : Une fois que le serveur confirme l'inscription :
-        
-        // // Nouvelle ligne : Utilise le chemin absolu à partir de la racine du dépôt
-window.location.href = '/prestocashinvests/success.html';
-
+        // Assurez-vous d'utiliser un chemin absolu qui fonctionne sur GitHub Pages
+        // On suppose que le dépôt est dans le dossier /prestocashinvests/
+        window.location.href = '/prestocashinvests/success.html'; 
+    });
 }); // Fin du DOMContentLoaded
 
 });

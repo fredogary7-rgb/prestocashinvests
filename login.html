@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion Affilié</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container form-container">
+        <h1>Connectez-vous à votre Espace</h1>
+        <p>Entrez vos identifiants pour accéder à votre tableau de bord.</p>
+        
+        <form id="loginForm">
+            <label for="loginEmail">Adresse E-mail</label>
+            <input type="email" id="loginEmail" name="email" required>
+            
+            <label for="loginPassword">Mot de passe</label>
+            <input type="password" id="loginPassword" name="motdepasse" required>
+            
+            <button type="submit">Se Connecter</button>
+        </form>
+        
+        <p class="switch-form-link">
+            Pas encore membre ? <a href="index.html">S'inscrire ici</a>
+        </p>
+    </div>
+
+    <script>
+        // Simulation de la connexion (pour le front-end)
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // En production, le serveur vérifierait l'email/mot de passe.
+            
+            // Redirection vers le tableau de bord après simulation de succès
+            // **Utilisation d'un chemin relatif au dossier de dépôt pour GitHub Pages**
+            window.location.href = '/prestocashinvests/dashboard.html';
+        });
+    </script>
+</body>
+</html>
+

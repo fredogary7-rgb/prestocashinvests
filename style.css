@@ -359,3 +359,17 @@ h2 {
     background-color: #5a6268;
 }
 
+/* --- Style pour le lien de basculement Inscription/Connexion --- */
+
+.switch-form-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9em;
+}
+
+.switch-form-link a {
+    color: #2875f5; /* Votre couleur primaire */
+    text-decoration: none;
+    font-weight: bold;
+}
+
