@@ -30,9 +30,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         
         // SIMULATION : Une fois que le serveur confirme l'inscription :
         
-        // Redirection vers la page de succès
-        window.location.href = 'success.html'; 
-    });
+        // Nouvelle ligne : Redirection en incluant le nom du dossier du dépôt
+window.location.href = './success.html'; 
+
 }); // Fin du DOMContentLoaded
 
 });
