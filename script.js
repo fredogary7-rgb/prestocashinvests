@@ -55,3 +55,15 @@ function copyCrypto() {
     });
 }
 
+// ... votre code existant ...
+
+// Fonction pour afficher/cacher le mot de passe
+function togglePasswordVisibility(fieldId) {
+    const field = document.getElementById(fieldId);
+    const type = field.getAttribute('type') === 'password' ? 'text' : 'password';
+    field.setAttribute('type', type);
+    // Vous pouvez changer l'icône ici si vous le souhaitez, par exemple :
+    // const toggleSpan = field.nextElementSibling;
+    // toggleSpan.textContent = (type === 'password' ? '👁️' : '🔒');
+}
+

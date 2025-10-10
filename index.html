@@ -7,48 +7,54 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Devenez Membre et Gagnez !</h1>
-        <p>Inscrivez-vous aujourd'hui pour accéder à nos meilleures opportunités d'affiliation.</p>
-       
-
-<form id="inscriptionForm">
-    <input type="hidden" id="parrainCode" name="parrain_code" value="">
-    
-    <label for="nom">Nom d'utilisateur</label>
-    <input type="text" id="nom" name="nom" required>
-    
-    <label for="email">Adresse E-mail</label>
-    <input type="email" id="email" name="email" required>
-    
-    <label>Numéro de Téléphone</label>
-    <div class="phone-group">
-        <select id="indicatif" name="indicatif" required>
-            <option value="">Pays</option>
-            <option value="+228">🇹🇬 Togo (+228)</option>
-            <option value="+229">🇧🇯 Bénin (+229)</option>
-            <option value="+225">🇨🇮 Côte d'Ivoire (+225)</option>
-            <option value="+237">🇨🇲 Cameroun (+237)</option>
-            <option value="+221">🇸🇳 Sénégal (+221)</option>
-            <option value="+223">🇲🇱 Mali (+223)</option>
-            <option value="+241">🇬🇦 Gabon (+241)</option>
-        </select>
-        <input type="tel" id="telephone" name="telephone" placeholder="Ex: 99 88 77 66" required>
-    </div>
-    
-    <label for="motdepasse">Mot de passe</label>
-    <input type="password" id="motdepasse" name="motdepasse" required>
-    
-    <p id="parrainDisplay" class="parrain-info"></p>
-    
-    <button type="submit">S'inscrire Maintenant</button>
-</form>
-
+    <div class="container form-container">
+        <div class="header-logo">
+            <img src="logo.png" alt="Logo Presto Cash"> <h1>PRESTO CASH</h1>
+        </div>
+        <h2>S'inscrire</h2>
+        <p>Rejoignez la communauté Presto Cash et commencez à gagner !</p>
+        
+        <form id="inscriptionForm">
+            <input type="hidden" id="parrainCode" name="parrain_code" value="">
+            
+            <label for="nom">Nom d'utilisateur <span class="required-star">*</span></label>
+            <input type="text" id="nom" name="nom" required>
+            
+            <label for="email">Adresse E-mail <span class="required-star">*</span></label>
+            <input type="email" id="email" name="email" required>
+            
+            <label>Numéro de Téléphone <span class="required-star">*</span></label>
+            <div class="phone-group">
+                <select id="indicatif" name="indicatif" required>
+                    <option value="">Pays</option>
+                    <option value="+228">🇹🇬 Togo (+228)</option>
+                    <option value="+229">🇧🇯 Bénin (+229)</option>
+                    <option value="+225">🇨🇮 Côte d'Ivoire (+225)</option>
+                    <option value="+237">🇨🇲 Cameroun (+237)</option>
+                    <option value="+221">🇸🇳 Sénégal (+221)</option>
+                    <option value="+223">🇲🇱 Mali (+223)</option>
+                    <option value="+241">🇬🇦 Gabon (+241)</option>
+                </select>
+                <input type="tel" id="telephone" name="telephone" placeholder="Ex: 99 88 77 66" required>
+            </div>
+            
+            <label for="motdepasse">Mot de passe <span class="required-star">*</span></label>
+            <div class="password-field">
+                <input type="password" id="motdepasse" name="motdepasse" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility('motdepasse')">👁️</span>
+            </div>
+            
+            <p id="parrainDisplay" class="parrain-info"></p>
+            
+            <button type="submit" class="primary-button">S'inscrire Maintenant</button>
         </form>
+        
+        <p class="switch-form-link">
+            Déjà un compte ? <a href="/prestocashinvests/login.html">Se connecter</a>
+        </p>
+    </div>
 
-    <p class="switch-form-link">
-        Déjà un compte ? <a href="login.html">Se connecter</a>
-    </p>
-
-</div> 
+    <script src="script.js"></script>
+</body>
+</html>
 

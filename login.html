@@ -8,23 +8,56 @@
 </head>
 <body>
     <div class="container form-container">
-        <h1>Connectez-vous à votre Espace</h1>
-        <p>Entrez vos identifiants pour accéder à votre tableau de bord.</p>
+        <div class="header-logo">
+            <img src="logo.png" alt="Logo Presto Cash"> <h1>PRESTO CASH</h1>
+        </div>
+        <h2>Se connecter</h2>
+        <p>Entrez votre email et votre mot de passe pour vous connecter !</p>
         
         <form id="loginForm">
-            <label for="loginEmail">Adresse E-mail</label>
-            <input type="email" id="loginEmail" name="email" required>
+            <label for="loginEmail">E-mail/Nom d'utilisateur <span class="required-star">*</span></label>
+            <input type="text" id="loginEmail" name="email" placeholder="Entrez l'e-mail/mot de passe" required>
             
-            <label for="loginPassword">Mot de passe</label>
-            <input type="password" id="loginPassword" name="motdepasse" required>
+            <label for="loginPassword">Mot de passe <span class="required-star">*</span></label>
+            <div class="password-field">
+                <input type="password" id="loginPassword" name="motdepasse" placeholder="Entrez votre mot de passe" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility('loginPassword')">👁️</span>
+            </div>
             
-            <button type="submit">Se Connecter</button>
+            <div class="options-row">
+                <label class="checkbox-container">Rester connecté
+                    <input type="checkbox">
+                    <span class="checkmark"></span>
+                </label>
+                <a href="#" class="forgot-password">Mot de passe oublié?</a>
+            </div>
+            
+            <button type="submit" class="primary-button">Se connecter</button>
         </form>
         
         <p class="switch-form-link">
-            Pas encore membre ? <a href="index.html">S'inscrire ici</a>
+            Vous n'avez pas de compte ? <a href="/prestocashinvests/index.html">Inscrivez-vous</a>
         </p>
     </div>
+
+    <script>
+        // Simulation de la connexion (pour le front-end)
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            window.location.href = '/prestocashinvests/dashboard.html';
+        });
+
+        // Fonction pour afficher/cacher le mot de passe
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const type = field.getAttribute('type') === 'password' ? 'text' : 'password';
+            field.setAttribute('type', type);
+            // Change l'icône si vous avez une icône pour ça
+        }
+    </script>
+</body>
+</html>
+
 
     <script>
         // Simulation de la connexion (pour le front-end)
