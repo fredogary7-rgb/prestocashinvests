@@ -1,0 +1,43 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Instructions de dépôt</title>
+<style>
+body {
+  background: linear-gradient(120deg, #f093fb, #f5576c);
+  display: flex; justify-content: center; align-items: center; height: 100vh;
+  font-family: 'Poppins', sans-serif; margin: 0;
+}
+.card {
+  background: #fff; padding: 2rem; border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2); animation: appear 0.9s ease;
+}
+a, button { text-decoration: none; display: inline-block; }
+button {
+  background: #007bff; color: white; border: none; border-radius: 8px;
+  padding: 0.7rem 1.2rem; margin-top: 1rem; transition: 0.3s;
+}
+button:hover { background: #0056b3; transform: scale(1.05); }
+@keyframes appear { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Instructions pour {{ payment_info_name }}</h2>
+  <p><strong>Montant :</strong> {{ amount }} {{ currency }}</p>
+  {% if payment_info_link %}
+  <p><a href="{{ payment_info_link }}" target="_blank"><button>Ouvrir le lien de paiement</button></a></p>
+  {% elif payment_info_address %}
+  <p><strong>Adresse Crypto :</strong><br>{{ payment_info_address }}</p>
+  {% endif %}
+  <form action="{{ url_for('submit_proof') }}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="amount" value="{{ amount }}">
+    <input type="hidden" name="method" value="{{ method }}">
+    <input type="hidden" name="sender_phone" value="{{ sender_phone }}">
+    <input type="text" name="reference_text" placeholder="Référence de transaction" required>
+    <button type="submit">Soumettre la preuve</button>
+  </form>
+</div>
+</body>
+</html>

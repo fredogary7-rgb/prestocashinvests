@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Application de Retrait{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+        .flash-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .flash-error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .flash-info { background-color: #cce5ff; color: #004085; border-color: #b8daff; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-gray-800 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">PrestoCash</h1>
+            <nav>
+                <a href="{{ url_for('dashboard_page') }}" class="mx-2 hover:text-blue-400">Accueil</a>
+                {% if g.user_id == ADMIN_ID %}
+                    <a href="{{ url_for('admin_retraits') }}" class="mx-2 hover:text-red-400 font-semibold">Admin Retraits</a>
+                {% endif %}
+                {% if g.user_info %}
+                    <a href="{{ url_for('withdraw_selection') }}" class="mx-2 hover:text-yellow-400">Retrait</a>
+                    <a href="{{ url_for('historique_page') }}" class="mx-2 hover:text-blue-400">Historique</a>
+                    <a href="{{ url_for('logout') }}" class="mx-2 bg-red-600 px-3 py-1 rounded-md hover:bg-red-700 transition">Déconnexion</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 flex-grow">
+        <div class="my-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="p-3 mb-3 rounded-lg border {{ 'flash-success' if category == 'success' else 'flash-error' if category == 'error' else 'flash-info' }} shadow-md" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-3 mt-auto">
+        <p class="text-sm">Connecté en tant que: <span class="font-mono text-yellow-300">{{ g.user_id if g.user_info else 'Anonyme' }}</span></p>
+    </footer>
+</body>
+</html>
+
+

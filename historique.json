@@ -1,0 +1,22 @@
+[
+  {
+    "type": "Investissement",
+    "date": "2025-10-10",
+    "montant": "+150 €"
+  },
+  {
+    "type": "Retrait",
+    "date": "2025-10-09",
+    "montant": "-50 €"
+  },
+  {
+    "type": "Bonus de parrainage",
+    "date": "2025-10-07",
+    "montant": "+25 €"
+  },
+  {
+    "type": "Investissement",
+    "date": "2025-10-05",
+    "montant": "+200 €"
+  }
+]

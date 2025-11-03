@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accès Restreint - Produits Rapides</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f8bbd0, #f3e5f5);
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #4a148c;
+      overflow: hidden;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 400px;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.15);
+      animation: fadeInUp 1s ease;
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #6a1b9a;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #7b1fa2, #512da8);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #512da8, #311b92);
+    }
+
+    .emoji {
+      font-size: 60px;
+      animation: bounce 2s infinite;
+      margin-bottom: 10px;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="emoji">🚫</div>
+    <h1>Accès Restreint</h1>
+    <p>
+      Les produits rapides ⚡ sont réservés aux utilisateurs ayant effectué un
+      <strong>investissement d’au moins 10 000 XOF sur 21 jours</strong>.
+    </p>
+    <p>
+      Faites un premier investissement pour débloquer cette section et accéder à
+      des gains rapides chaque jour 💸
+    </p>
+    <form action="{{ url_for('produits_rapide_page') }}">
+  <a href="{{ url_for('decouvrir_page') }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md transition">
+    Voir les produits de 21 jours
+  </a>
+    </form>
+  </div>
+</body>
+</html>

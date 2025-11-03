@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Dépôts</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #e1bee7);
+      color: #333;
+      text-align: center;
+      padding: 20px;
+      animation: fadeIn 1.2s ease-in-out;
+    }
+    h1 {
+      color: #00796b;
+      text-transform: uppercase;
+      margin-bottom: 25px;
+    }
+    table {
+      width: 95%;
+      margin: auto;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      overflow: hidden;
+      animation: slideIn 0.8s ease;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #4caf50;
+      color: white;
+    }
+    tr:hover {
+      background-color: #f1f8e9;
+      transition: background-color 0.3s ease;
+    }
+    form {
+      display: inline;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+      transition: transform 0.2s ease;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    .btn-validate {
+      background-color: #43a047;
+    }
+    .btn-reject {
+      background-color: #e53935;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideIn {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .status {
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: white;
+    }
+    .status-pending { background: orange; }
+    .status-accepted { background: green; }
+    .status-rejected { background: red; }
+  </style>
+</head>
+<body>
+  <h1>💰 Gestion des Dépôts</h1>
+
+  {% if depots %}
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>Email</th>
+      <th>Montant (XOF)</th>
+      <th>Méthode</th>
+      <th>Date</th>
+      <th>Statut</th>
+      <th>Actions</th>
+    </tr>
+
+    {% for d in depots %}
+    <tr>
+      <td>{{ d.id }}</td>
+      <td>{{ d.email }}</td>
+      <td>{{ "%.0f"|format(d.amount|float) }}</td>
+      <td>{{ d.method }}</td>
+      <td>{{ d.created_at or '—' }}</td>
+      <td>
+        <span class="status status-{{ d.status|lower }}">
+          {{ d.status }}
+        </span>
+      </td>
+      <td>
+        {% if d.status == 'pending' %}
+          <form method="POST" style="display:inline;">
+            <input type="hidden" name="depot_id" value="{{ d.id }}">
+            <input type="hidden" name="action" value="validate">
+            <button type="submit" class="btn-validate">✅ Valider</button>
+          </form>
+
+          <form method="POST" style="display:inline;">
+            <input type="hidden" name="depot_id" value="{{ d.id }}">
+            <input type="hidden" name="action" value="reject">
+            <button type="submit" class="btn-reject">❌ Rejeter</button>
+          </form>
+        {% else %}
+          —
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+    <p>Aucun dépôt trouvé.</p>
+  {% endif %}
+</body>
+</html>

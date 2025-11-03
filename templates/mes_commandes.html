@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Commandes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        /* --- GLOBAL --- */
+        body {
+            font-family: "Poppins", sans-serif;
+            background: linear-gradient(135deg, #89f7fe, #66a6ff);
+            margin: 0;
+            padding: 0;
+            color: #222;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 10px rgba(0, 123, 255, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(0, 123, 255, 0.5); }
+            100% { box-shadow: 0 0 10px rgba(0, 123, 255, 0.2); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0); }
+        }
+
+        /* --- HEADER --- */
+        h1 {
+            margin-top: 40px;
+            text-align: center;
+            color: #0d47a1;
+            font-weight: 700;
+            font-size: 2.2rem;
+            animation: fadeInUp 1s ease;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1rem;
+            color: #333;
+            opacity: 0.8;
+            margin-bottom: 25px;
+            animation: fadeInUp 1.2s ease;
+        }
+
+        /* --- FILTRE --- */
+        .filter-container {
+            text-align: center;
+            margin-bottom: 25px;
+            animation: fadeInUp 1.4s ease;
+        }
+
+        .filter-btn {
+            background: white;
+            border: none;
+            color: #1976d2;
+            font-weight: 600;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .filter-btn:hover {
+            background-color: #1976d2;
+            color: white;
+        }
+
+        .filter-btn.active {
+            background-color: #1976d2;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* --- CONTAINER --- */
+        .commandes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        /* --- CARD --- */
+        .commande-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.9s ease;
+            transition: all 0.3s ease;
+        }
+
+        .commande-card:hover {
+            transform: translateY(-6px);
+            animation: glow 2s infinite ease-in-out;
+        }
+
+        .commande-card h3 {
+            margin-top: 0;
+            color: #1976d2;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .commande-card p {
+            font-size: 0.95rem;
+            color: #333;
+            margin: 6px 0;
+        }
+
+        .status {
+            font-weight: 600;
+            color: white;
+            border-radius: 12px;
+            padding: 6px 14px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .en-cours {
+            background-color: #ff9800;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        .termine {
+            background-color: #4caf50;
+        }
+
+        /* --- AUCUNE COMMANDE --- */
+        .no-commande {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #555;
+            margin-top: 60px;
+            animation: fadeInUp 1s ease;
+        }
+
+        /* --- BOUTON RETOUR --- */
+        .back-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .back-link {
+            display: inline-block;
+            text-decoration: none;
+            color: white;
+            background-color: #1976d2;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .back-link:hover {
+            background-color: #0d47a1;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📦 Mes Commandes</h1>
+    <div class="subtitle">Suivez vos investissements en cours et terminés</div>
+
+    <!-- FILTRE -->
+    <div class="filter-container">
+        <button class="filter-btn active" onclick="filterCommandes('tous')">Tous</button>
+        <button class="filter-btn" onclick="filterCommandes('en-cours')">En cours</button>
+        <button class="filter-btn" onclick="filterCommandes('termine')">Terminés</button>
+    </div>
+
+    {% if commandes and commandes|length > 0 %}
+        <div class="commandes-container" id="commandes-list">
+            {% for cmd in commandes %}
+                <div class="commande-card {% if 'cours' in (cmd.statut or cmd.status or '')|lower %}en-cours{% else %}termine{% endif %}">
+                    <h3>{{ cmd.nom }}</h3>
+                    <p>💰 Montant investi : <strong>{{ "{:,.0f}".format(cmd.montant) }} XOF</strong></p>
+                    <p>📅 Début : {{ cmd.date_debut or cmd.date_investissement }}</p>
+                    <p>⏱ Durée : {{ cmd.duree_jours }} jours</p>
+                    <p>💸 Revenu quotidien : {{ cmd.revenu_quotidien or "Non défini" }}</p>
+                    <p>📈 Rendement total : {{ cmd.rendement_total or "Non défini" }}</p>
+                    <p class="status {% if 'cours' in (cmd.statut or cmd.status or '')|lower %}en-cours{% else %}termine{% endif %}">
+                        {{ cmd.statut or cmd.status or 'En cours' }}
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-commande">😕 Aucun investissement trouvé pour le moment.<br>Investissez dès maintenant pour commencer à générer des revenus.</p>
+    {% endif %}
+
+    <div class="back-container">
+        <a href="{{ url_for('dashboard_page') }}" class="back-link">← Retour au tableau de bord</a>
+    </div>
+
+    <script>
+        function filterCommandes(type) {
+            const cards = document.querySelectorAll(".commande-card");
+            const buttons = document.querySelectorAll(".filter-btn");
+            buttons.forEach(btn => btn.classList.remove("active"));
+            event.target.classList.add("active");
+
+            cards.forEach(card => {
+                if (type === 'tous') {
+                    card.style.display = 'block';
+                } else if (type === 'en-cours') {
+                    card.style.display = card.classList.contains('en-cours') ? 'block' : 'none';
+                } else if (type === 'termine') {
+                    card.style.display = card.classList.contains('termine') ? 'block' : 'none';
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

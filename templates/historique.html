@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Historique des Investissements - PrestoCash</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.3);
+            padding: 30px;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+        h1 {
+            text-align: center;
+            color: #00b4d8;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: rgba(0, 180, 216, 0.2);
+            color: #00b4d8;
+            font-weight: 600;
+        }
+        tr {
+            transition: 0.3s;
+        }
+        tr:nth-child(even) {
+            background-color: rgba(255,255,255,0.05);
+        }
+        tr:hover {
+            background-color: rgba(0, 180, 216, 0.15);
+            transform: scale(1.01);
+        }
+        .status {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 6px;
+        }
+        .status.Confirmé {
+            color: #06d6a0;
+        }
+        .status.En\ attente {
+            color: #ffd166;
+        }
+        .status.Refusé {
+            color: #ef476f;
+        }
+        a.btn {
+            display: inline-block;
+            background: #00b4d8;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        a.btn:hover {
+            background: #0096c7;
+            transform: scale(1.05);
+        }
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(30px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Historique de vos investissements</h1>
+
+        {% if user.historique %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Plan</th>
+                    <th>Montant (XOF)</th>
+                    <th>Date début</th>
+                    <th>Date fin</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in user.historique %}
+                {% set cout = inv.get('cout', 0) %}
+                <tr>
+                    <td>{{ inv.get('plan_id', '—') }}</td>
+                    <td>{{ cout | float | round(2) | string | replace(",", " ") }}</td>
+                    <td>{{ inv.get('date_debut', '—') }}</td>
+                    <td>{{ inv.get('date_fin', '—') }}</td>
+                    <td><span class="status {{ inv.get('statut', 'Inconnu') }}">{{ inv.get('statut', 'Inconnu') }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align:center; margin-top:20px;">Aucun investissement confirmé pour le moment.</p>
+        {% endif %}
+
+        <div style="text-align:center;">
+            <a href="{{ url_for('dashboard_page') }}" class="btn">🏠 Retour au tableau de bord</a>
+            <a href="{{ url_for('investi_page') }}" class="btn">➕ Nouvel investissement</a>
+        </div>
+    </div>
+</body>
+</html>

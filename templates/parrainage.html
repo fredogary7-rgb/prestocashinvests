@@ -1,0 +1,222 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Programme de Parrainage - PRESTO CASH</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #3b82f6, #6d28d9);
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+      color: #1e293b;
+    }
+
+    .dashboard-main {
+      max-width: 600px;
+      margin: 60px auto;
+      background: linear-gradient(180deg, #f1f5ff 0%, #ffffff 100%);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1.logo-text {
+      color: #1e3a8a;
+      font-size: 1.8em;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    p.subtitle {
+      color: #475569;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      border-radius: 14px;
+      padding: 25px 10px;
+      text-align: center;
+      color: #fff;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .stat-card:first-child {
+      background: linear-gradient(145deg, #60a5fa, #2563eb);
+    }
+
+    .stat-card:last-child {
+      background: linear-gradient(145deg, #34d399, #059669);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .stat-card h3 {
+      font-size: 2em;
+      margin: 0;
+    }
+
+    .stat-card p {
+      font-size: 0.9em;
+      margin-top: 8px;
+      opacity: 0.9;
+    }
+
+    .referral-input-group {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .copy-btn {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.95em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 3px 10px rgba(79,70,229,0.3);
+      transition: 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background-color: #4338ca;
+    }
+
+    .code {
+      font-size: 0.85em;
+      color: #dc2626;
+      margin-top: 10px;
+    }
+
+    .whatsapp-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background-color: #25D366;
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      margin-top: 25px;
+      font-weight: 500;
+      transition: 0.3s ease;
+    }
+
+    .whatsapp-link:hover {
+      background-color: #1aaa55;
+    }
+
+    .referral-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+
+    .referral-list li {
+      background-color: #f3f4f6;
+      border-left: 4px solid #10b981;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 0.9em;
+      color: #374151;
+    }
+
+    .empty-msg {
+      margin-top: 25px;
+      color: #6b7280;
+      font-size: 0.9em;
+      text-align: center;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 40px;
+      color: #4f46e5;
+      text-decoration: none;
+      font-weight: 500;
+      text-align: center;
+      width: 100%;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-main">
+    <h1 class="logo-text">Programme de Parrainage</h1>
+    <p class="subtitle">Invitez vos amis et gagnez des commissions sur leurs dépôts !</p>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>{{ referrals_count }}</h3>
+        <p>Filleuls Enregistrés</p>
+      </div>
+      <div class="stat-card">
+        <h2>{{ total_commissions }} XOF</h2>
+        <p>Commissions Totales</p>
+      </div>
+    </div>
+
+    <div class="referral-input-group">
+      <button class="copy-btn" onclick="copyReferral()">
+        <i class="ri-file-copy-line"></i> Copier mon lien de parrainage
+      </button>
+      <p class="code">Code unique : <strong>{{ user.referral_code }}</strong></p>
+    </div>
+
+    <a href="https://whatsapp.com/channel/0029VbBheB45vKAEZCAuRk32" target="_blank" class="whatsapp-link">
+      <i class="ri-whatsapp-line"></i> Rejoindre la communauté WhatsApp
+    </a>
+
+    {% if referrals_count > 0 %}
+      <h4 style="margin-top: 30px; text-align:center;">Vos Filleuls ({{ referrals_count }})</h4>
+      <ul class="referral-list">
+        {% for email in user.referrals_list %}
+          <li>{{ email }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-msg">Vous n'avez pas encore de filleul. Partagez votre lien ci-dessus !</p>
+    {% endif %}
+
+    <a href="{{ url_for('dashboard_page') }}" class="back-link">← Retour au Tableau de Bord</a>
+  </div>
+
+  <script>
+    function copyReferral() {
+      const url = "{{ url_for('referral_page', ref=user.referral_code, _external=True) }}";
+      navigator.clipboard.writeText(url);
+      alert("✅ Lien de parrainage copié !");
+    }
+  </script>
+</body>
+</html>

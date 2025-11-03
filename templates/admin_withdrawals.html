@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin - Retraits en Attente{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto mt-10">
+    <h1 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">Demandes de Retrait en Attente</h1>
+
+    {% if withdrawals %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow-xl rounded-2xl overflow-hidden">
+            <thead class="bg-yellow-500 text-white">
+                <tr>
+                    <th class="py-3 px-6 text-left">Utilisateur</th>
+                    <th class="py-3 px-6 text-left">Montant (XOF)</th>
+                    <th class="py-3 px-6 text-left">Pays</th>
+                    <th class="py-3 px-6 text-left">Méthode</th>
+                    <th class="py-3 px-6 text-left">Récepteur</th>
+                    <th class="py-3 px-6 text-left">Statut</th>
+                    <th class="py-3 px-6 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w_id, w in withdrawals.items() %}
+                <tr class="border-b hover:bg-gray-50 transition duration-300">
+                    <td class="py-3 px-6">{{ w.email }}</td>
+                    <td class="py-3 px-6">{{ "{:,.2f}".format(w['amount']) | replace(",", " ") }} XOF</td>
+                    <td class="py-3 px-6">{{ w.get('country', '—') }}</td>
+                    <td class="py-3 px-6">{{ w.get('method', '—') }}</td>
+                    <td class="py-3 px-6">{{ w.get('receiver', '—') }}</td>
+                    <td class="py-3 px-6 font-semibold text-yellow-600">{{ w.get('status', 'En attente') }}</td>
+                    <td class="py-3 px-6 text-center space-x-2">
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="withdrawal_id" value="{{ w_id }}">
+                            <input type="hidden" name="action" value="validate">
+                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-xl transition duration-300">
+                                ✅ Valider
+                            </button>
+                        </form>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="withdrawal_id" value="{{ w_id }}">
+                            <input type="hidden" name="action" value="reject">
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-xl transition duration-300">
+                                ❌ Rejeter
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-center text-gray-500 mt-10 text-lg">Aucune demande de retrait en attente pour le moment.</p>
+    {% endif %}
+</div>
+{% endblock %}

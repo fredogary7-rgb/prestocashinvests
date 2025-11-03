@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin - Retraits en Attente{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto mt-10">
+    <h1 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">Demandes de Retrait</h1>
+
+    {% if withdrawals %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow-xl rounded-2xl overflow-hidden transform transition-all duration-500 ease-out opacity-0 translate-y-10 animate-fadeIn">
+            <thead class="bg-yellow-500 text-white">
+                <tr>
+                    <th class="py-3 px-6 text-left">Utilisateur</th>
+                    <th class="py-3 px-6 text-left">Montant</th>
+                    <th class="py-3 px-6 text-left">Pays</th>
+                    <th class="py-3 px-6 text-left">Méthode</th>
+                    <th class="py-3 px-6 text-left">Récepteur</th>
+                    <th class="py-3 px-6 text-left">Statut</th>
+                    <th class="py-3 px-6 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in withdrawals %}
+                <tr class="border-b hover:bg-gray-50 transition duration-300">
+                    <td class="py-3 px-6">{{ w.user_email }}</td>
+                    <td class="py-3 px-6">{{ "{:,.2f}".format(w.amount) | replace(",", " ") }} XOF</td>
+                    <td class="py-3 px-6">{{ w.country }}</td>
+                    <td class="py-3 px-6">{{ w.method }}</td>
+                    <td class="py-3 px-6">{{ w.receiver }}</td>
+                    <td class="py-3 px-6 font-semibold {{ 'text-green-600' if w.status == 'Validé' else 'text-yellow-600' }}">{{ w.status }}</td>
+                    <td class="py-3 px-6 text-center space-x-2">
+                        {% if w.status == 'En attente' %}
+                        <a href="{{ url_for('validate_retrait', user_email=w.user_email, timestamp=w.timestamp) }}"
+                           class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-xl transition duration-300">Valider</a>
+                        <a href="{{ url_for('reject_retrait', user_email=w.user_email, timestamp=w.timestamp) }}"
+                           class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-xl transition duration-300">Rejeter</a>
+                        {% else %}
+                        <span class="text-gray-500 italic">Action impossible</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-center text-gray-500 mt-10 text-lg">Aucune demande de retrait pour le moment.</p>
+    {% endif %}
+</div>
+
+<!-- Animation fadeIn -->
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.6s forwards;
+}
+</style>
+{% endblock %}

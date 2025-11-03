@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de Bord - PRESTO CASH</title>
+
+  <style>
+    /* 🌈 Arrière-plan animé */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      color: #333;
+      background: linear-gradient(135deg, #0a2d6b, #1a4f8f, #003080);
+      background-size: 400% 400%;
+      animation: gradientMove 10s ease infinite;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* 🌟 Animations globales */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .page-container {
+      padding-bottom: 90px;
+    }
+
+    /* 👤 En-tête utilisateur */
+    .header-profile {
+      color: white;
+      padding: 25px 20px 10px 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .avatar {
+      width: 50px;
+      height: 50px;
+      background-color: white;
+      border-radius: 50%;
+      margin-right: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.9em;
+      color: #1a4f8f;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      animation: scaleIn 0.7s ease-out forwards;
+    }
+
+    /* 💰 Carte de solde */
+    .balance-card-primary {
+      background-color: #1a4f8f;
+      color: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      text-align: center;
+      position: relative;
+      animation: scaleIn 1s ease forwards;
+    }
+
+    .header-profile:: after {
+      content: "";
+      position: absolute;
+      top: 15px;
+      left: 50px;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 120px;
+      background: url("{{ url_for('static', filename='images/presto.png') }}") no-repeat center/contain;
+      opacity: 0.1;
+      z-index: 0;
+    }
+
+    .balance-label {
+      font-size: 1em;
+      opacity: 0.9;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .balance-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      position: relative;
+      z-index: 1;
+    }
+
+    .fcfa-unit {
+      font-size: 1.2em;
+      opacity: 0.9;
+      margin-left: 4px;
+    }
+
+    /* 📦 Contenu principal */
+    .dashboard-content {
+      padding: 0 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+      top: -10px;
+    }
+
+    /* 🔘 Grille d'actions animée */
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 25px;
+      animation: fadeInUp 1.2s ease forwards;
+    }
+
+    .action-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 15px 5px;
+      border-radius: 10px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.9em;
+      text-align: center;
+      height: 80px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .action-button:hover {
+      transform: scale(1.07);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+    }
+
+    .action-button .icon {
+      font-size: 1.7em;
+      margin-bottom: 5px;
+    }
+
+    /* 🎨 Couleurs */
+    .green-bg { background-color: #4CAF50; }
+    .red-bg { background-color: #F44336; }
+    .yellow-bg { background-color: #FFC107; color: #333; }
+    .blue-bg { background-color: #2196F3; }
+    .purple-bg { background-color: #9C27B0; }
+    .teal-bg { background-color: #00BCD4; }
+
+    /* 📋 Cartes blanches */
+    .section-card {
+      background-color: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      animation: fadeInUp 1.4s ease forwards;
+      opacity: 0;
+    }
+
+    .section-card:nth-of-type(2) { animation-delay: 1.2s; opacity: 1; }
+    .section-card:nth-of-type(3) { animation-delay: 1.4s; opacity: 1; }
+    .section-card:nth-of-type(4) { animation-delay: 1.6s; opacity: 1; }
+
+    .info-section h3 {
+      color: #0a2d6b;
+      margin-top: 0;
+    }
+
+    .logout-link {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+      display: inline-block;
+      transition: color 0.3s;
+    }
+
+    .logout-link:hover {
+      color: #d00000;
+    }
+
+    /* 🚀 Barre de navigation en bas */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 70px;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      z-index: 100;
+      animation: fadeInUp 1.8s ease forwards;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      font-size: 12px;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .nav-item.active {
+      color: #0a2d6b;
+    }
+
+    .nav-item:hover {
+      color: #0a2d6b;
+    }
+
+    .nav-item i {
+      font-size: 22px;
+      margin-bottom: 3px;
+    }
+
+    /* 🔵 Bouton central flottant */
+    .fab {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #0a2d6b;
+      color: #fff;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      border: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.3s, background-color 0.3s;
+    }
+
+    .fab:hover {
+      transform: translateX(-50%) scale(1.1);
+      background-color: #0940b5;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <header class="header-profile">
+    <div class="user-info">
+      <div class="avatar">PC</div>
+      <div>
+        <div style="font-size: 1.1em; font-weight: bold;">{{ user.username if user.username else ' PRESTO CASH' }}</div>
+        <div style="font-size: 0.9em; opacity: 0.8;">{{ user.phone_number if user.phone_number else '' }}</div>
+      </div>
+    </div>
+
+    <div class="balance-card-primary">
+      <p class="balance-value">
+        <h2>{{ "%.0f"|format(user.balance if user.balance else 0) }} XOF</h2>
+      </p>
+    </div>
+  </header>
+
+  <div class="page-container">
+    <main class="dashboard-content">
+
+      <div class="section-card">
+        <div class="action-grid">
+          <a href="/deposit" class="action-button green-bg"><i class="icon">↗</i> Dépôt</a>
+          <a href="/retrait" class="action-button red-bg"><i class="icon">↙</i> Retrait</a>
+          <a href="/tasks" class="action-button yellow-bg"><i class="icon">🎁</i> Bonus</a>
+          <a href="https://t.me/Presto_cash" class="action-button blue-bg"><i class="icon">📞</i> Service</a>
+          <a href="/referral" class="action-button purple-bg"><i class="icon">🧑‍🤝‍🧑</i> Parrainage</a>
+          <a href="{{ url_for('historique_page') }}" class="action-button teal-bg"><i class="icon">📜</i> Historique</a>
+        </div>
+      </div>
+
+      <section class="section-card info-section">
+        <h3>Informations Importantes</h3>
+        <p>Consultez les règles avant de commencer vos premières tâches.</p>
+        <a href="/reglement" class="logout-link">Règlement complet</a>
+      </section>
+
+      <div class="section-card" style="padding: 10px;">
+        <h4 style="color: #1a4f8f;">Découvrez nos offres</h4>
+        <img src="{{ url_for('static', filename='images/premium.png') }}"
+             alt="Promotion"
+             style="width: 100%; border-radius: 8px;">
+      </div>
+
+    </main>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="#" class="nav-item active"><i class="fa-solid fa-house"></i><span>Accueil</span></a>
+    <a href="{{ url_for('investi_page') }}" class="nav-item"><i class="fa-solid fa-chart-line"></i><span>Invest.</span></a>
+
+    <a href="{{ url_for('decouvrir_page') }}">
+    <button class="fab"><i class="fa-solid fa-plus"></i></button>
+
+    <a href="{{ url_for('parrainage_page') }}" class="nav-item"><i class="fa-solid fa-users"></i><span>Équipe</span></a>
+    <a href="{{ url_for('profile_page') }}" class="nav-item"><i class="fa-solid fa-user"></i><span>Moi</span></a>
+  </div>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</body>
+</html>

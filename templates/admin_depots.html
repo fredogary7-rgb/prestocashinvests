@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="text-2xl font-bold mb-4">📋 Liste des dépôts</h2>
+<p>Nombre de dépôts : {{ depots|length }}</p>
+{% if depots and depots|length > 0 %}
+<table class="min-w-full bg-white border border-gray-300 rounded-lg">
+  <thead class="bg-gray-100">
+    <tr>
+      <th class="px-4 py-2 border">ID</th>
+      <th class="px-4 py-2 border">Utilisateur</th>
+      <th class="px-4 py-2 border">Montant</th>
+      <th class="px-4 py-2 border">Statut</th>
+      <th class="px-4 py-2 border">Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for depot in depots %}
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-2 border text-center">{{ depot.id or "—" }}</td>
+      <td class="px-4 py-2 border text-center">{{ depot.user_id or "Inconnu" }}</td>
+      <td class="px-4 py-2 border text-center">{{ depot.montant or 0 }} XOF</td>
+      <td class="px-4 py-2 border text-center">{{ depot.statut or "en attente" }}</td>
+      <td class="px-4 py-2 border text-center">{{ depot.date or "Non spécifiée" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% else %}
+<div class="p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg">
+  Aucun dépôt trouvé pour le moment.
+</div>
+{% endif %}
+
+{% endblock %}

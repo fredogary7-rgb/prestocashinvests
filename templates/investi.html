@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investissement - PRESTO CASH</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    /* --- Styles généraux --- */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #0a2d6b, #123d88);
+      color: #333;
+      animation: fadeIn 0.8s ease;
+    }
+
+    /* Animation d’apparition */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Animation des cartes */
+    @keyframes cardPop {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .header {
+      background-color: transparent;
+      color: white;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .back-btn {
+      position: absolute;
+      left: 15px;
+      color: white;
+      font-size: 22px;
+      text-decoration: none;
+      z-index: 10;
+    }
+
+    .content {
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      animation: fadeIn 1s ease;
+    }
+
+    /* Carte de solde */
+    .balance-info {
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 1.1em;
+      animation: cardPop 0.8s ease;
+    }
+
+    h2 {
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 5px;
+      margin-top: 30px;
+      color: #fff;
+      text-transform: uppercase;
+      font-size: 1.1em;
+    }
+
+    /* --- Cartes d’investissement --- */
+    .plan-card {
+      background-color: white;
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      margin-bottom: 18px;
+      border-left: 5px solid #0a2d6b;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      animation: cardPop 0.6s ease;
+    }
+
+    .plan-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+    }
+
+    .plan-card h3 {
+      margin-top: 0;
+      color: #0a2d6b;
+      font-size: 1.1em;
+      margin-bottom: 10px;
+    }
+
+    .plan-details p {
+      margin: 5px 0;
+      font-size: 0.95em;
+    }
+
+    .plan-details strong {
+      font-weight: bold;
+    }
+
+    .invest-btn {
+      background: linear-gradient(135deg, #00b14f, #00923d);
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      float: right;
+      font-weight: 600;
+      transition: all 0.25s ease;
+    }
+
+    .invest-btn:hover {
+      background: linear-gradient(135deg, #00923d, #00b14f);
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Messages */
+    .message {
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+      animation: fadeIn 0.6s ease;
+    }
+
+    .message.success { background-color: #d4edda; color: #155724; }
+    .message.error { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="{{ url_for('dashboard_page') }}" class="back-btn">
+      <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <h1>Investissement</h1>
+  </div>
+
+  <div class="content">
+
+    {% if message %}
+      <div class="message {{ message.type }}">
+        {{ message.text }}
+      </div>
+    {% endif %}
+
+    <div class="balance-info">
+      Solde disponible : <strong>{{ user_solde | round(2) }} XOF</strong>
+    </div>
+
+    {% for plan_type, plans in plans.items() %}
+      <h2>{{ plan_type | replace('_', ' ') | title }}</h2>
+
+      {% for vip_level, plan in plans.items() %}
+        <div class="plan-card">
+          <form method="POST">
+            <input type="hidden" name="plan_id" value="{{ plan_type }}_{{ vip_level }}">
+
+            <h3>{{ vip_level }} - Coût : {{ plan.investissement }} XOF</h3>
+
+            <div class="plan-details">
+              {% if 'gain_quotidien' in plan %}
+                <p>Gain Quotidien : <strong>{{ plan.gain_quotidien }} XOF</strong></p>
+              {% elif 'gain_total' in plan %}
+                <p>Gain Total (après {{ plan.duree_jours }} jours) : <strong>{{ plan.gain_total }} XOF</strong></p>
+              {% endif %}
+              <p>Durée : <strong>{{ plan.duree_jours }} Jours</strong></p>
+            </div>
+
+            <button type="submit" class="invest-btn">Investir Maintenant</button>
+          </form>
+          <div style="clear: both;"></div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+
+  </div>
+
+</body>
+</html>

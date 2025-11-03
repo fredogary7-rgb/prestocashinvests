@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Équipe de Parrainage</title>
+    <!-- Chargement de Tailwind CSS pour un style moderne et responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuration de la police Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Arrière-plan clair */
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 md:p-8">
+
+    <!-- Conteneur principal centré -->
+    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
+        
+        <!-- En-tête de la page -->
+        <header class="bg-blue-600 p-6 text-white text-center rounded-t-2xl">
+            <h1 class="text-3xl font-extrabold mb-1">Mon Équipe</h1>
+            <p class="text-blue-200">Liste des utilisateurs inscrits via votre lien de parrainage ({{ referrals | length }} filleul(s))</p>
+        </header>
+
+        <!-- Liste des Filleuls -->
+        <main class="p-4 sm:p-6">
+            {% if referrals %}
+                <div class="space-y-4">
+                    <!-- Boucle sur la liste 'referrals' passée par Flask -->
+                    {% for user in referrals %}
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-xl transition duration-200 ease-in-out">
+                            
+                            <!-- Informations de l'utilisateur -->
+                            <div class="mb-2 sm:mb-0">
+                                <p class="text-lg font-semibold text-gray-800 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 12a.997.997 0 01-.998-1.129A16.035 16.035 0 0012 14c-3.18 0-6.207.975-8.88 2.871A.997.997 0 013 22h18z"></path></svg>
+                                    {{ user.nom }} 
+                                </p>
+                                <p class="text-sm text-gray-500 ml-7">Inscrit le : {{ user.date_inscription }}</p>
+                            </div>
+
+                            <!-- Statut et Dépôt -->
+                            <div class="text-right flex flex-col items-start sm:items-end w-full sm:w-auto">
+                                {% set status_color = 'bg-green-100 text-green-800' if 'Déposé' in user.statut_depot else ('bg-yellow-100 text-yellow-800' if 'En attente' in user.statut_depot else 'bg-gray-100 text-gray-600') %}
+                                
+                                <!-- Badge de Statut -->
+                                <span class="text-xs font-medium px-2.5 py-0.5 rounded-full {{ status_color }} mb-1">
+                                    {{ user.statut_depot }}
+                                </span>
+                                
+                                <!-- Montant du Dépôt (simulé ici) -->
+                                <p class="text-sm font-bold text-gray-700">Dépôt: {{ user.montant_depot }}</p>
+                            </div>
+
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Message si aucun filleul n'est trouvé -->
+                <div class="p-6 text-center bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                    <p class="text-lg font-medium text-yellow-800">Aucun utilisateur trouvé.</p>
+                    <p class="text-sm text-yellow-700 mt-1">Invitez vos amis pour commencer à gagner des commissions !</p>
+                </div>
+            {% endif %}
+        </main>
+        
+        <!-- Pied de page/Résumé -->
+        <footer class="p-4 sm:p-6 bg-gray-100 border-t rounded-b-2xl text-center text-sm text-gray-500">
+            Ceci est un aperçu en temps réel de votre réseau de parrainage.
+        </footer>
+        
+    </div>
+
+</body>
+</html>
+
+

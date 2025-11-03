@@ -1,0 +1,41 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion - PRESTO CASH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-container">
+        
+        <h1 class="logo-text">PRESTO CASH</h1>
+        
+        <h2>Se connecter</h2>
+        <p class="subtitle">Entrez votre identifiant et mot de passe pour vous connecter !</p>
+        
+        <form action="/api/connexion" method="POST">
+            
+            <label for="email">E-mail/Nom d'utilisateur *</label>
+            <input type="email" id="email" name="email" placeholder="Entrez l'e-mail/nom d'utilisateur" required>
+            
+            <label for="password">Mot de passe *</label>
+            <input type="password" id="password" name="password" placeholder="Entrez votre mot de passe" required>
+            
+            <div class="options-row">
+                <label class="checkbox-container">
+                    <input type="checkbox" name="remember">
+                    Rester connecté
+                </label>
+                <a href="/mot-de-passe-oublie" class="forgot-link">Mot de passe oublié ?</a>
+            </div>
+
+            <button type="submit" class="auth-btn">Se connecter</button>
+        </form>
+        
+        <div class="footer-links">
+            <p>Vous n'avez pas de compte ? <a href="/inscription" class="signup-link">Inscrivez-vous ici</a></p>
+        </div>
+    </div>
+</body>
+</html>
+

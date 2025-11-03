@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonus Quotidien</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f3f6ff; color: #333; }
+        .header {
+            background-color: #0d2b77; color: white; padding: 15px 20px; 
+            display: flex; align-items: center; justify-content: center; 
+            position: relative; 
+        }
+        .back-btn {
+            position: absolute; left: 15px; color: white; font-size: 22px; 
+            text-decoration: none; z-index: 10;
+        }
+        .content { padding: 20px; max-width: 450px; margin: 0 auto; text-align: center; }
+        
+        .bonus-card {
+            background-color: #FFC107; /* Jaune pour le bonus */
+            color: #333;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .bonus-card h2 { margin-top: 0; font-size: 1.5em; }
+        .bonus-card p { font-size: 1.1em; }
+
+        .bonus-amount { font-size: 2.5em; font-weight: bold; color: #D32F2F; margin-top: 10px; }
+
+        .claim-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #4CAF50; /* Vert par défaut (disponible) */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .claim-btn:hover { background-color: #388E3C; }
+        
+        .claimed {
+            background-color: #9E9E9E; /* Gris (déjà réclamé) */
+            cursor: not-allowed;
+        }
+
+        /* Messages de statut */
+        .message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    
+    <div class="header">
+        <a href="{{ url_for('dashboard_page') }}" class="back-btn">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1>Bonus Quotidien</h1>
+    </div>
+
+    <div class="content">
+
+        {% if message %}
+        <div class="message {{ message.type }}">
+            {{ message.text }}
+        </div>
+        {% endif %}
+
+        <div class="bonus-card">
+            <h2>Votre Récompense Quotidienne</h2>
+            <div class="bonus-amount">{{ bonus_amount | round(2) }} XOF</div>
+            <p>Réclamez votre bonus gratuit pour augmenter votre solde !</p>
+        </div>
+
+        <form method="POST">
+            {% if bonus_claimed_today %}
+                <button type="button" class="claim-btn claimed" disabled>
+                    Bonus déjà Réclamé Aujourd'hui
+                </button>
+            {% else %}
+                <button type="submit" class="claim-btn">
+                    Réclamer le Bonus Maintenant
+                </button>
+            {% endif %}
+        </form>
+        
+        <p style="margin-top: 30px; font-size: 0.9em;">
+            Solde actuel : <strong>{{ user_solde | round(2) }} XOF</strong>
+        </p>
+    </div>
+</body>
+</html>
+

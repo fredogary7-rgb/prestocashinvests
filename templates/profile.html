@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Mon profil - PrestoCash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a2d6b, #003080);
+      font-family: 'Poppins', sans-serif;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeInBody 1s ease forwards;
+    }
+
+    @keyframes fadeInBody {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .profile-card {
+      position: relative;
+      background: #fff;
+      border-radius: 20px;
+      margin: 30px 20px 20px;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+      overflow: hidden;
+      width: 85%;
+      max-width: 400px;
+      animation: scaleIn 0.7s ease-out forwards;
+    }
+
+    .profile-card::before {
+      content: "";
+      position: absolute;
+      top: 10px;
+      left: 50px;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 80px;
+      background: url("{{ url_for('static', filename='images/presto.png') }}") no-repeat center/contain;
+      opacity: 0.20;
+      z-index: 0;
+    }
+
+    .profile-card * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .name {
+      font-weight: 600;
+      font-size: 20px;
+      margin-top: 15px;
+      color: #0a2d6b;
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    .phone {
+      color: #555;
+      font-size: 14px;
+      margin-bottom: 15px;
+      animation: fadeInUp 1s ease forwards;
+    }
+
+    .balance-box {
+      background: #f4f5f7;
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 15px;
+      animation: fadeInUp 1.2s ease forwards;
+    }
+
+    .balance-box p {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .balance-box h2 {
+      margin: 5px 0;
+      font-size: 26px;
+      color: #0a2d6b;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+      animation: fadeInUp 1.4s ease forwards;
+    }
+
+    .actions a {
+      text-decoration: none;
+      font-weight: 600;
+      color: #fff;
+      background: #0a2d6b;
+      padding: 10px 25px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .actions a.retrait {
+      background: #d00000;
+    }
+
+    .actions a:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .info-section {
+      background: #fff;
+      border-radius: 12px;
+      margin: 10px 20px;
+      padding: 12px 15px;
+      font-size: 15px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      width: 85%;
+      max-width: 400px;
+      text-align: center;
+      animation: fadeInUp 1.6s ease forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .info-section:nth-child(3) { animation-delay: 1.6s; }
+    .info-section:nth-child(4) { animation-delay: 1.8s; }
+    .info-section:nth-child(5) { animation-delay: 2s; }
+    .info-section:nth-child(6) { animation-delay: 2.2s; }
+    .info-section:nth-child(7) { animation-delay: 2.4s; }
+
+    /* ✅ Bloc Produits Rapides et Mes Commandes */
+    .produit-rapide, .mes-commandes {
+      background: #fff;
+      border-radius: 12px;
+      margin: 10px 20px;
+      padding: 15px;
+      font-size: 15px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      width: 85%;
+      max-width: 400px;
+      text-align: center;
+      animation: fadeInUp 2.4s ease forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .produit-rapide p, .mes-commandes p {
+      margin: 0 0 10px;
+      color: #0a2d6b;
+      font-weight: 500;
+    }
+
+    .produit-rapide button, .mes-commandes button {
+      background: #0a2d6b;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .produit-rapide button:hover, .mes-commandes button:hover {
+      transform: scale(1.05);
+      background: #003580;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .logout {
+      text-align: center;
+      margin-top: 25px;
+      animation: fadeInUp 2.6s ease forwards;
+    }
+
+    .logout a {
+      color: #ff3333;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      transition: color 0.3s;
+    }
+
+    .logout a:hover {
+      color: #ff0000;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="profile-card">
+    <div class="name">{{ user_name }}</div>
+    <div class="phone">{{ user_phone }}</div>
+
+    <div class="balance-box">
+      <p>Solde actuel</p>
+      <h2>{{ "%.0f"|format(user_solde) }} XOF</h2>
+    </div>
+
+    <div class="actions">
+      <a href="/deposit">Dépôt</a>
+      <a href="/retrait" class="retrait">Retrait</a>
+    </div>
+  </div>
+
+  <div class="info-section">Historique des transactions</div>
+  <div class="info-section">Règles du site</div>
+  <div class="info-section">À propos de nous</div>
+  <div class="info-section">Service client</div>
+
+  <!-- ✅ Nouveau bloc Mes Commandes -->
+  <div class="mes-commandes">
+    <p>📦 Consultez vos investissements en cours </p>
+    <button onclick="window.location.href='{{ url_for('mes_commandes_page') }}'">
+      Mes Commandes
+    </button>
+  </div>
+
+  <!-- ✅ Bloc Produits Rapides -->
+  <div class="produit-rapide">
+    <p>🚀 Investissez dès maintenant et recevez vos gains chaque jour !</p>
+    <button onclick="window.location.href='{{ url_for('produits_rapide_page') }}'">
+      Produits Rapides
+    </button>
+  </div>
+
+  <div class="logout">
+    <a href="/logout">Déconnexion</a>
+  </div>
+
+</body>
+</html>

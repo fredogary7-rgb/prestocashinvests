@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Dépôt - PrestoCash</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; margin: 0; padding: 0; }
+.container { max-width: 700px; margin: 50px auto; padding: 30px; background: #fff; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); text-align: center; }
+h1 { color: #333; margin-bottom: 30px; }
+ul { list-style: none; padding: 0; }
+li { margin: 20px 0; }
+a.button { display: inline-block; padding: 15px 30px; margin: 10px; font-size: 1.1em; font-weight: bold; color: #fff; text-decoration: none; border-radius: 50px; background: linear-gradient(45deg,#ff7e5f,#feb47b); transition: all 0.4s ease; }
+a.button:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+.crypto { background: linear-gradient(45deg,#6a11cb,#2575fc); display: inline-block; padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: bold; word-break: break-all; transition: all 0.4s ease; }
+.crypto:hover { transform: scale(1.05); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Effectuer un dépôt</h1>
+    <ul>
+        {% for devise, lien in depots.items() %}
+            <li>
+                {% if devise == "CRYPTO (BEP20)" %}
+                    <div class="crypto">{{ devise }} : {{ lien }}</div>
+                    <p>Copiez cette adresse pour effectuer votre dépôt crypto.</p>
+                {% else %}
+                    <a class="button" href="{{ lien }}" target="_blank">Déposer en {{ devise }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+</body>
+</html>

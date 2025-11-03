@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block title %}Administration des Retraits{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-8">
+
+    <h2 class="text-4xl font-extrabold text-gray-900 mb-8 text-center tracking-wide animate-fadeIn">
+        Gestion des Retraits Utilisateurs
+    </h2>
+
+    {% if withdrawals %}
+        <div class="space-y-6">
+            {% for w in withdrawals %}
+                <div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-blue-500
+                            transform transition-all duration-500 ease-out opacity-0 translate-y-10 animate-fadeIn">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <p class="text-lg font-semibold">{{ w.email }}</p>
+                            <p class="text-sm text-gray-500">{{ w.date }}</p>
+                        </div>
+                        <div class="text-2xl font-bold">{{ "{:,.2f}".format(w.amount) | replace(",", " ") }} XOF</div>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-gray-700"><span class="font-semibold">Méthode :</span> {{ w.method }}</p>
+                        <p class="text-gray-700"><span class="font-semibold">Numéro/Adresse :</span> {{ w.address_or_number }}</p>
+                        <p class="text-gray-700"><span class="font-semibold">Statut :</span> {{ w.status }}</p>
+                    </div>
+                    {% if w.status == 'en_attente' %}
+                        <form method="POST" action="{{ url_for('admin_withdrawals') }}" class="flex space-x-4">
+                            <input type="hidden" name="email" value="{{ w.email }}">
+                            <input type="hidden" name="index" value="{{ w.index }}">
+                            <button type="submit" name="action" value="approve"
+                                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg
+                                           transition duration-300 transform hover:scale-[1.03]">
+                                Valider
+                            </button>
+                            <button type="submit" name="action" value="reject"
+                                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg
+                                           transition duration-300 transform hover:scale-[1.03]">
+                                Rejeter
+                            </button>
+                        </form>
+                    {% else %}
+                        <p class="text-gray-500 italic mt-2">Cette demande a déjà été traitée.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center text-gray-500 mt-10 text-lg animate-fadeIn">Aucune demande de retrait en attente.</p>
+    {% endif %}
+</div>
+
+<!-- Animation fadeIn -->
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.6s forwards;
+}
+</style>
+{% endblock %}

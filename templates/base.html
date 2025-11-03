@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title if title else "PrestoCash" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* --- Style du menu --- */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f7f8fa;
+    }
+
+    nav {
+      background-color: #1e2a38;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .menu-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .menu-left a {
+      color: white;
+      text-decoration: none;
+      background: #25D366; /* Couleur WhatsApp */
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .menu-left a:hover {
+      opacity: 0.8;
+    }
+
+    .logout-btn {
+      background: #ff4444;
+    }
+   <img src="{{ url_for('static', filename='images/presto.png') }}" alt="Presto Cash" width="120">
+</head>
+<body>
+
+  <nav>
+    <div class="menu-left">
+      <a href="https://chat.whatsapp.com/tonlienici" target="_blank">💬 Communauté WhatsApp</a>
+      <a href="{{ url_for('logout') }}" class="logout-btn">🚪 Se déconnecter</a>
+    </div>
+  </nav>
+
+  <main style="padding:20px;">
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>

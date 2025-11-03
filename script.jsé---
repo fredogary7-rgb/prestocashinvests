@@ -1,0 +1,85 @@
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- 1. Logique de Parrainage (Code existant, inchangé) ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const parrainCode = urlParams.get('ref');
+    const parrainInput = document.getElementById('parrainCode');
+    const parrainDisplay = document.getElementById('parrainDisplay');
+
+    if (parrainCode && parrainInput) {
+        parrainInput.value = parrainCode; 
+        if (parrainDisplay) {
+            parrainDisplay.innerHTML = `🥳 Vous êtes parrainé par le code : <strong>${parrainCode}</strong>`;
+        }
+    } else if (parrainDisplay) {
+        parrainDisplay.innerHTML = `Pas de parrain ? Devenez affilié en vous inscrivant !`;
+    }
+
+    // --- 2. Fonction d'Aide pour Envoyer les Données ---
+    async function sendData(url, data) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        return response.json();
+    }
+
+    // --- 3. Gestion de l'Inscription (index.html) ---
+    const inscriptionForm = document.getElementById('inscriptionForm');
+    if (inscriptionForm) {
+        inscriptionForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                nom: document.getElementById('nom').value,
+                email: document.getElementById('email').value,
+                telephone: document.getElementById('indicatif').value + document.getElementById('telephone').value,
+                motdepasse: document.getElementById('motdepasse').value,
+                parrain_code: document.getElementById('parrainCode').value
+            };
+
+            const result = await sendData('/api/register', data);
+            
+            if (result.success) {
+                // Redirection après succès sur le serveur
+                window.location.href = '/success'; 
+            } else {
+                alert('Erreur d\'inscription: ' + result.message);
+            }
+        });
+    }
+
+    // --- 4. Gestion de la Connexion (login.html) ---
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                motdepasse: document.getElementById('loginPassword').value
+            };
+
+            const result = await sendData('/api/login', data);
+
+            if (result.success) {
+                // Redirection après connexion réussie
+                window.location.href = '/dashboard'; 
+            } else {
+                alert('Erreur de connexion: ' + result.message);
+            }
+        });
+    }
+
+}); // Fin du DOMContentLoaded
+
+// Fonction pour afficher/cacher le mot de passe (doit rester hors du DOMContentLoaded)
+function togglePasswordVisibility(fieldId) {
+    const field = document.getElementById(fieldId);
+    const type = field.getAttribute('type') === 'password' ? 'text' : 'password';
+    field.setAttribute('type', type);
+}
+

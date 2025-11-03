@@ -1,419 +1,104 @@
-/* --- Variables de Couleurs --- */
-:root {
-    --primary-blue: #4a67ff; /* Bleu principal des boutons, titres */
-    --secondary-blue: #2c4488; /* Bleu plus foncé pour texte secondaire */
-    --background-light: #f6f8fa; /* Fond très clair */
-    --text-dark: #333333; /* Couleur de texte sombre */
-    --text-light: #666666; /* Couleur de texte plus claire */
-    --border-light: #e0e0e0; /* Couleur de bordure des champs */
-    --button-green: #00c087; /* Vert pour les actions de succès */
-    --error-red: #dc3545; /* Rouge pour les erreurs/commissions */
-    --shadow-light: rgba(0, 0, 0, 0.08); /* Ombre légère pour les cartes */
-}
-
-/* --- Styles Généraux --- */
+/* Style général et polices */
 body {
-    font-family: 'Roboto', 'Arial', sans-serif;
-    background-color: var(--background-light);
-    color: var(--text-dark);
+    font-family: Arial, sans-serif;
     margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    font-size: 16px;
+    background-color: #f0f2f5;
+    color: #333;
 }
 
-.container {
-    background-color: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px var(--shadow-light);
-    max-width: 450px; /* Plus large pour correspondre à l'image */
-    width: 100%;
-    text-align: center;
-    box-sizing: border-box;
-    margin: 20px auto; /* Pour les marges sur les écrans plus grands */
+/* Conteneur principal pour centrer le contenu */
+.auth-container {
+    max-width: 450px;
+    margin: 20px auto;
+    padding: 15px;
 }
 
-/* --- En-tête (Logo + Titre) --- */
-.header-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 25px;
-}
-
-.header-logo img {
-    width: 40px; /* Ajustez si votre logo est plus grand ou plus petit */
-    height: 40px;
-    margin-right: 10px;
-}
-
-.header-logo h1 {
-    font-size: 1.8em;
-    color: var(--primary-blue);
-    margin: 0;
-}
-
-h2 {
-    color: var(--text-dark);
-    font-size: 1.8em;
-    margin-bottom: 10px;
-}
-
-p {
-    color: var(--text-light);
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
-
-/* --- Formulaires --- */
-form {
-    text-align: left;
-}
-
-label {
-    display: block;
-    margin-top: 18px;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--text-dark);
-    font-size: 0.95em;
-}
-
-.required-star {
-    color: var(--error-red);
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="tel"],
-select {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid var(--border-light);
-    border-radius: 8px; /* Coins arrondis pour les champs */
-    box-sizing: border-box;
-    font-size: 1em;
-    color: var(--text-dark);
-    background-color: #fcfdfe; /* Léger fond pour les champs */
-}
-
-input::placeholder {
-    color: var(--text-light);
-    font-size: 0.9em;
-}
-
-/* --- Champ de mot de passe avec icône --- */
-.password-field {
-    position: relative;
-    width: 100%;
-}
-
-.password-field input {
-    padding-right: 40px; /* Espace pour l'icône */
-}
-
-.toggle-password {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: var(--text-light);
-    font-size: 0.9em;
-}
-
-/* --- Options (Rester connecté, Mot de passe oublié) --- */
-.options-row {
+.auth-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 15px;
-    margin-bottom: 25px;
-    font-size: 0.9em;
+    margin-bottom: 20px;
 }
 
-.checkbox-container {
-    display: block;
-    position: relative;
-    padding-left: 25px;
-    margin-bottom: 0;
-    cursor: pointer;
-    font-size: 0.9em;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: var(--text-light);
+.logo {
+    font-size: 24px;
+    color: #003366; /* Bleu foncé */
 }
 
-.checkbox-container input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-}
-
-.checkmark {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 18px;
-    width: 18px;
-    background-color: #eee;
-    border-radius: 4px;
-    border: 1px solid var(--border-light);
-}
-
-.checkbox-container input:checked ~ .checkmark {
-    background-color: var(--primary-blue);
-    border: 1px solid var(--primary-blue);
-}
-
-.checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
-}
-
-.checkbox-container input:checked ~ .checkmark:after {
-    display: block;
-}
-
-.checkbox-container .checkmark:after {
-    left: 6px;
-    top: 2px;
-    width: 5px;
-    height: 10px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    -webkit-transform: rotate(45deg);
-    -ms-transform: rotate(45deg);
-    transform: rotate(45deg);
-}
-
-.forgot-password {
-    color: var(--primary-blue);
+.auth-header a {
     text-decoration: none;
-    font-weight: 600;
+    color: #0056b3;
+    font-size: 14px;
 }
 
-/* --- Boutons --- */
-.primary-button {
-    background-color: var(--primary-blue);
-    color: white;
-    padding: 14px 20px;
-    border: none;
-    border-radius: 8px; /* Coins arrondis pour les boutons */
-    cursor: pointer;
-    font-size: 1.1em;
-    font-weight: 600;
-    width: 100%;
-    margin-top: 25px;
-    transition: background-color 0.3s ease;
-}
-
-.primary-button:hover {
-    background-color: var(--secondary-blue); /* L'effet hover est plus foncé */
-}
-
-/* --- Lien de basculement (Déjà un compte, Pas encore membre) --- */
-.switch-form-link {
-    text-align: center;
-    margin-top: 30px;
-    font-size: 0.95em;
-    color: var(--text-dark);
-}
-
-.switch-form-link a {
-    color: var(--primary-blue);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-/* --- Styles spécifiques aux pages d'accueil et tableau de bord (à adapter si vous les utilisez) --- */
-/* (Gardez vos autres styles comme ceux du dashboard, offers, hero section et footer si vous voulez les conserver) */
-
-/* Voici un exemple pour adapter le header du dashboard */
-.dashboard-header {
-    background-color: var(--primary-blue);
-    color: white;
-    padding: 15px 0;
-}
-
-.dashboard-header h2 {
-    color: white; /* Titre du dashboard en blanc */
-}
-
-/* Styles pour le groupe téléphone (à ajuster si besoin) */
-.phone-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-#indicatif {
-    flex: 0 0 40%;
-    padding: 12px 15px; /* Ajuster le padding pour correspondre aux autres inputs */
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    background-color: #fcfdfe;
-    font-size: 1em;
-    color: var(--text-dark);
-}
-#telephone {
-    flex: 1;
-}
-
-/* Styles pour le parrainage */
-.parrain-info {
-    color: var(--primary-blue);
-    font-style: italic;
-    margin-top: 10px;
-    text-align: center;
-}
-
-/* --- Styles pour le Nouveau Tableau de Bord (Inspiré de l'image) --- */
-
-/* 1. Section Bienvenue et Stats Rapides */
-.welcome-box {
-    background-color: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px var(--shadow-light);
-    margin-bottom: 25px;
-    text-align: left;
-}
-
-.welcome-box .user-info {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.welcome-box .user-info p {
-    margin: 0;
-    color: var(--text-dark);
-    font-weight: 500;
-}
-
-.user-avatar {
-    font-size: 2em;
-    margin-right: 15px;
-    background-color: #e6e6fa; /* Légère couleur de fond pour l'avatar */
-    border-radius: 50%;
-    padding: 5px;
-}
-
-.quick-stats-row {
-    display: flex;
-    gap: 15px;
-    margin-top: 10px;
-}
-
-.quick-stat {
-    flex: 1;
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-    color: white;
-}
-
-.quick-stat h4 {
-    margin: 0;
-    font-size: 0.9em;
-    opacity: 0.9;
-}
-
-.quick-stat .stat-value {
-    font-size: 1.3em;
-    font-weight: bold;
-    margin-top: 5px;
-    margin-bottom: 0;
-    color: white; /* Assurez-vous que le texte de valeur est blanc */
-}
-
-.stat-expense {
-    background-color: #6a5acd; /* Violet/Bleu pour les dépenses */
-}
-
-.stat-benefit {
-    background-color: var(--button-green); /* Vert pour les bénéfices */
-}
-
-/* 2. Cartes Principales (Grid et Styles des Cartes) */
-.main-cards-grid {
-    display: grid;
-    gap: 20px;
-    grid-template-columns: 1fr; /* Une colonne sur mobile */
-    margin-bottom: 25px;
-}
-
-@media (min-width: 600px) {
-    .main-cards-grid {
-        grid-template-columns: 1fr 1fr; /* Deux colonnes sur tablette/desktop */
-    }
-}
-
-.info-card {
-    background-color: white;
+/* La carte blanche pour le formulaire */
+.auth-card {
+    background-color: #ffffff;
     padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px var(--shadow-light);
-    text-align: left;
-    color: white; /* Texte principal blanc sur fond coloré */
-    position: relative;
-    overflow: hidden; /* Pour l'effet de coin */
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.info-card h4 {
-    margin-top: 0;
-    font-size: 1.1em;
-    font-weight: 500;
-    color: white;
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
 }
 
-.info-card .description {
-    font-size: 0.8em;
-    opacity: 0.8;
-    margin-bottom: 10px;
-    color: white;
-}
-
-.info-card .card-value {
-    font-size: 2.2em;
-    font-weight: bold;
+.card-header h2 {
     margin: 0;
+    font-size: 28px;
+}
+
+.link-secondary {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Style des champs du formulaire */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* MISE A JOUR ICI : j'ai ajouté .form-group select */
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box; /* Important pour que le padding ne dépasse pas */
+    font-size: 16px; /* Pour une meilleure lisibilité sur mobile */
+}
+
+.form-footer-link {
+    font-size: 14px;
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+/* Style du bouton principal */
+.btn-primary {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 6px;
+    background-color: #007bff;
     color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
-/* Couleurs des Cartes */
-.blue-card {
-    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
-}
-
-.red-card {
-    background: linear-gradient(135deg, #e64a4a, #cc3737); /* Rouge pour Retraits */
-}
-
-.green-card {
-    background: linear-gradient(135deg, #38b000, #28a745); /* Vert pour Bonus */
-}
-
-.info-card-commission {
-    background: white; /* Carte d'info reste blanche */
-    color: var(--text-dark); /* Texte redevient sombre */
-    border: 2px dashed var(--primary-blue);
-    text-align: center;
-}
-
-.info-card-commission h4 {
-    color: var(--primary-blue);
-}
-.info-card-commission .description {
-    color: var(--text-dark);
+.btn-primary:hover {
+    background-color: #0056b3;
 }
 

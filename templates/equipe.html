@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Équipe & Parrainage</title>
+    <!-- Utilisation de la même structure de base pour la cohérence -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Styles CSS personnalisés pour garantir l'affichage -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding-top: 20px;
+        }
+        .container {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1a1a1a;
+            font-size: 24px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .section-title {
+            font-size: 18px;
+            color: #004d40;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .team-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap; /* Assure la réactivité sur mobile */
+        }
+        .stat-item {
+            flex-grow: 1;
+            min-width: 140px;
+            padding: 20px;
+            border-radius: 12px;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .stat-item h3 {
+            font-size: 28px;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+        }
+        .stat-item p {
+            font-size: 14px;
+            margin: 0;
+            opacity: 0.8;
+        }
+        /* Couleurs pour les statistiques */
+        .bg-blue { background-color: #007bff; }
+        .bg-yellow { background-color: #ffc107; color: #333; }
+
+        /* Section Lien de Parrainage */
+        .referral-box {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px dashed #ced4da;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .referral-link-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            color: #333;
+            text-align: center;
+        }
+        .copy-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mon Équipe & Parrainage</h1>
+
+        <!-- BLOC DE STATISTIQUES (Le bloc qui doit s'afficher !) -->
+        <p class="section-title">Vos Statistiques d'Équipe</p>
+        <div class="team-stats">
+            <div class="stat-item bg-blue">
+                <h3>{{ team_data.total_membres }}</h3>
+                <p>Membres de votre équipe</p>
+            </div>
+            <div class="stat-item bg-yellow">
+                <h3>{{ team_data.commission_totale }} XOF</h3>
+                <p>Commissions totales</p>
+            </div>
+        </div>
+        <!-- FIN BLOC DE STATISTIQUES -->
+
+        <!-- BLOC LIEN DE PARRAINAGE -->
+        <p class="section-title">Lien de Parrainage</p>
+        <div class="referral-box">
+            <p>Partagez ce lien pour inviter de nouveaux membres :</p>
+            <input type="text" id="referral-link" class="referral-link-input" 
+                   value="{{ team_data.lien_parrainage }}" readonly>
+            <button class="copy-btn" onclick="copyLink()">Copier le Lien</button>
+        </div>
+        <!-- FIN BLOC LIEN DE PARRAINAGE -->
+<nav class="space-y-4">
+            <!-- Bouton Communauté WhatsApp (Utilisez votre lien réel ici) -->
+            <a href="https://whatsapp.com/channel/0029VbBheB45vKAEZCAuRk32" target="_blank">
+               class="flex items-center space-x-3 p-3 rounded-xl bg-green-500 text-white font-semibol>
+                <i class="ph-bold ph-whatsapp-logo text-2xl"></i>
+                <span class="text-lg">Communauté WhatsApp</span>
+            </a>
+        
+        <br>
+        <a href="{{ url_for('dashboard_page') }}" class="copy-btn" style="display: block; text-align: center; background-color: #6c757d;">Retour au Tableau de Bord</a>
+    </div>
+
+    <script>
+        function copyLink() {
+            var copyText = document.getElementById("referral-link");
+            
+            // Sélectionnez le texte
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); /* Pour les mobiles */
+            
+            // Copiez le texte dans le presse-papiers (solution compatible iframe)
+            document.execCommand('copy');
+            
+            alert("Lien de parrainage copié : " + copyText.value);
+        }
+    </script>
+</body>
+</html>
+
+

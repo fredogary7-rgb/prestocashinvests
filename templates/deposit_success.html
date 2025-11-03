@@ -1,0 +1,33 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Dépôt réussi</title>
+<style>
+body {
+  background: linear-gradient(135deg, #11998e, #38ef7d);
+  display: flex; justify-content: center; align-items: center; height: 100vh;
+  font-family: 'Poppins', sans-serif; color: #fff;
+}
+.card {
+  background: rgba(255,255,255,0.15); padding: 2rem; border-radius: 16px;
+  backdrop-filter: blur(8px); text-align: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2); animation: pop 1s ease;
+}
+button {
+  background: #fff; color: #11998e; border: none;
+  padding: 0.6rem 1rem; border-radius: 8px; margin-top: 1rem;
+  transition: 0.3s;
+}
+button:hover { transform: scale(1.05); background: #e6fff7; }
+@keyframes pop { from {opacity:0; transform:scale(0.8);} to {opacity:1; transform:scale(1);} }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>✅ Dépôt envoyé avec succès</h2>
+  <p>ID de transaction : <b>{{ transaction_id }}</b></p>
+  <a href="{{ url_for('dashboard_page') }}"><button>Faire un autre dépôt</button></a>
+</div>
+</body>
+</html>

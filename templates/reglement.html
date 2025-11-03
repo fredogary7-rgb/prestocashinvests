@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Règlement du site - PRESTO CASH</title>
+    <style>
+        /* --- Reset & Fonts --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* --- Container & Card --- */
+        .container {
+            width: 100%;
+            max-width: 800px;
+            animation: fadeIn 1.2s ease forwards;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform: translateY(50px);
+            opacity: 0;
+            animation: slideUp 1s ease forwards;
+            animation-delay: 0.2s;
+        }
+
+        /* --- Title --- */
+        .title {
+            font-size: 1.8rem;
+            color: #2575fc;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: #6a11cb;
+            margin: 10px auto 0;
+            border-radius: 2px;
+        }
+
+        /* --- List --- */
+        ol {
+            list-style-position: inside;
+            color: #333;
+            line-height: 1.7;
+        }
+        li {
+            margin-bottom: 20px;
+            padding-left: 10px;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        li:hover {
+            transform: scale(1.03);
+            color: #6a11cb;
+        }
+
+        strong {
+            color: #2575fc;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            0% { transform: translateY(50px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2 class="title">🔒 Nos régles</h2>
+            <ol>
+                <li><strong>Responsabilité de l’utilisateur :</strong><br>
+                Chaque utilisateur est responsable de ses choix d’investissement. Avant tout dépôt, il doit s’assurer de bien comprendre les risques liés aux placements financiers.</li>
+
+                <li><strong>Transparence et sécurité :</strong><br>
+                Le site garantit la confidentialité des données et la sécurité des transactions. Aucune information personnelle ne sera partagée sans autorisation.</li>
+
+                <li><strong>Aucune promesse de gain :</strong><br>
+                Les performances passées ne garantissent pas les résultats futurs. Les investissements peuvent entraîner des pertes partielles ou totales du capital.</li>
+
+                <li><strong>Retraits et dépôts :</strong><br>
+                Les dépôts sont traités immédiatement. Les retraits peuvent nécessiter une vérification d’identité pour des raisons de sécurité.</li>
+
+                <li><strong>Comportement des utilisateurs :</strong><br>
+                Tout acte de fraude, de spam ou de tentative de piratage entraînera la suspension immédiate du compte.</li>
+
+                <li><strong>Modification du règlement :</strong><br>
+                L’administration se réserve le droit de modifier le présent règlement à tout moment pour garantir un meilleur service.</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

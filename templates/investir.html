@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investir - {{ product.nom }}</title>
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 500px;
+            background: white;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .amount {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .message {
+            background-color: #e9f7ef;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 0.8rem;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 0.8rem;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .back-link {
+            text-align: center;
+            display: block;
+            margin-top: 1rem;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ product.nom }}</h1>
+        <p>{{ product.description }}</p>
+        <p>Montant minimum : <span class="amount">{{ "{:,.0f}".format(product.montant_min) }} XOF</span></p>
+        <p>Durée : <strong>{{ product.duree_jours }} jours</strong></p>
+        <p>Rendement total : <strong>{{ "{:,.0f}".format(product.rendement_total) }} XOF</strong></p>
+
+        {% if message %}
+            <div class="message">{{ message }}</div>
+        {% else %}
+            <form method="POST">
+                <button type="submit" class="btn">Confirmer l'investissement</button>
+            </form>
+        {% endif %}
+
+        <a href="{{ url_for('dashboard_page') }}" class="back-link">← Retour aux offres</a>
+    </div>
+</body>
+</html>

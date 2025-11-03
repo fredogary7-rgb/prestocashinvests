@@ -3,58 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription - Rejoignez la Communauté !</title>
+    <title>S'inscrire - PrestoCash</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container form-container">
-        <div class="header-logo">
-            <img src="logo.png" alt="Logo Presto Cash"> <h1>PRESTO CASH</h1>
-        </div>
-        <h2>S'inscrire</h2>
-        <p>Rejoignez la communauté Presto Cash et commencez à gagner !</p>
-        
-        <form id="inscriptionForm">
-            <input type="hidden" id="parrainCode" name="parrain_code" value="">
-            
-            <label for="nom">Nom d'utilisateur <span class="required-star">*</span></label>
-            <input type="text" id="nom" name="nom" required>
-            
-            <label for="email">Adresse E-mail <span class="required-star">*</span></label>
-            <input type="email" id="email" name="email" required>
-            
-            <label>Numéro de Téléphone <span class="required-star">*</span></label>
-            <div class="phone-group">
-                <select id="indicatif" name="indicatif" required>
-                    <option value="">Pays</option>
-                    <option value="+228">🇹🇬 Togo (+228)</option>
-                    <option value="+229">🇧🇯 Bénin (+229)</option>
-                    <option value="+225">🇨🇮 Côte d'Ivoire (+225)</option>
-                    <option value="+237">🇨🇲 Cameroun (+237)</option>
-                    <option value="+221">🇸🇳 Sénégal (+221)</option>
-                    <option value="+223">🇲🇱 Mali (+223)</option>
-                    <option value="+241">🇬🇦 Gabon (+241)</option>
-                </select>
-                <input type="tel" id="telephone" name="telephone" placeholder="Ex: 99 88 77 66" required>
+
+    <div class="auth-container">
+        <header class="auth-header">
+            <h1 class="logo">PrestoCash</h1>
+            <a href="#">Consulter les règles</a>
+        </header>
+
+        <main class="auth-card">
+            <div class="card-header">
+                <h2>S'inscrire</h2>
+                <a href="login.html" class="link-secondary">Connexion</a>
             </div>
-            
-            <label for="motdepasse">Mot de passe <span class="required-star">*</span></label>
-            <div class="password-field">
-                <input type="password" id="motdepasse" name="motdepasse" required>
-                <span class="toggle-password" onclick="togglePasswordVisibility('motdepasse')">👁️</span>
-            </div>
-            
-            <p id="parrainDisplay" class="parrain-info"></p>
-            
-            <button type="submit" class="primary-button">S'inscrire Maintenant</button>
-        </form>
-        
-        <p class="switch-form-link">
-            Déjà un compte ? <a href="/prestocashinvests/login.html">Se connecter</a>
-        </p>
+
+            <form action="#">
+                <div class="form-group">
+                    <label for="fullname">Nom complet</label>
+                    <input type="text" id="fullname" placeholder="Entrez votre nom complet">
+                </div>
+
+                <div class="form-group">
+                    <label for="country">Pays</label>
+                    <select id="country">
+                        <option value="228">Togo (+228)</option>
+                        <option value="229">Bénin (+229)</option>
+                        <option value="225">Côte d'Ivoire (+225)</option>
+                        <option value="223">Mali (+223)</option>
+                        <option value="221">Sénégal (+221)</option>
+                        <option value="237">Cameroun (+237)</option>
+                        <option value="241">Gabon (+241)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Numéro de téléphone</label>
+                    <input type="tel" id="phone" placeholder="Votre numéro sans l'indicatif">
+                </div>
+                <div class="form-group">
+                    <label for="referral">Code de parrainage (optionnel)</label>
+                    <input type="text" id="referral" placeholder="Code de parrainage">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" placeholder="Créez un mot de passe">
+                </div>
+
+                <p class="form-footer-link">
+                    Déjà inscrit ? <a href="login.html">Se connecter</a>
+                </p>
+
+                <button type="submit" class="btn-primary">S'inscrire</button>
+            </form>
+        </main>
     </div>
 
-    <script src="script.js"></script>
 </body>
 </html>
-

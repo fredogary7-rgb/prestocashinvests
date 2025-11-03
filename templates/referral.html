@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Lien de Parrainage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #f3f6ff; 
+            margin: 0;
+        }
+
+        /* Header */
+        .header {
+            background-color: #0d2b77;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+        }
+        .back-btn {
+            position: absolute;
+            left: 15px;
+            color: white;
+            font-size: 22px;
+            text-decoration: none;
+        }
+
+        /* Content box */
+        .content {
+            padding: 20px;
+            max-width: 480px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            animation: fadeIn 0.6s forwards;
+        }
+
+        .link-box {
+            border: 2px dashed #9C27B0;
+            padding: 15px;
+            background: #F3E5F5;
+            border-radius: 8px;
+            margin: 20px 0;
+            word-break: break-all;
+            transition: transform 0.2s ease;
+        }
+        .link-box:hover {
+            transform: scale(1.02);
+        }
+        .link-box p {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #4A148C;
+            margin: 0;
+        }
+
+        /* Copy button */
+        .copy-btn {
+            background-color: #9C27B0;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: bold;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .copy-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Table filleuls */
+        .filleuls-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .filleuls-table th, .filleuls-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .filleuls-table th {
+            background-color: #0d2b77;
+            color: white;
+        }
+        .filleuls-table td {
+            color: #333;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{{ url_for('dashboard_page') }}" class="back-btn">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1>Lien de Parrainage</h1>
+    </div>
+
+    <div class="content">
+        <h2>Invitez vos amis ! 🤝</h2>
+        <p>Partagez votre lien personnel pour gagner <b>30%</b> de commission sur leur premier dépôt.</p>
+
+        {% if referral_link %}
+            <div class="link-box">
+                <p id="referralLink">{{ referral_link }}</p>
+            </div>
+
+            <button class="copy-btn" onclick="copyLink()">
+                <i class="fa-solid fa-copy"></i> Copier le Lien
+            </button>
+
+            <p id="copyMessage" style="color: #4CAF50; margin-top: 10px; display: none;">Lien copié !</p>
+
+            <h3 style="margin-top: 25px;">👥 Mes Filleuls</h3>
+            {% if filleuls %}
+                <table class="filleuls-table">
+                    <tr>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Total Dépôt (XOF)</th>
+                    </tr>
+                    {% for f in filleuls %}
+                        <tr>
+                            <td>{{ f.nom }}</td>
+                            <td>{{ f.email }}</td>
+                            <td>{{ f.total_depot }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>Aucun filleul pour le moment.</p>
+            {% endif %}
+        {% else %}
+            <p style="color: red;">Veuillez vous connecter pour obtenir votre lien de parrainage.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        function copyLink() {
+            const link = document.getElementById('referralLink');
+            if (!link) return alert("Aucun lien à copier.");
+            navigator.clipboard.writeText(link.innerText).then(() => {
+                const message = document.getElementById('copyMessage');
+                message.style.display = 'block';
+                setTimeout(() => { message.style.display = 'none'; }, 2000);
+            }).catch(err => {
+                console.error('Erreur lors de la copie: ', err);
+                alert('Impossible de copier le lien. Veuillez le sélectionner manuellement.');
+            });
+        }
+    </script>
+</body>
+</html>
