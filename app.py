@@ -1055,6 +1055,7 @@ def parrainage_page():
     if not user_email:
         flash("Veuillez vous connecter pour accéder à votre page de parrainage.", "error")
         return redirect(url_for('connexion'))
+    from flask import request
 
     users_data = load_users_data()
     user = users_data.get(user_email)
@@ -1089,8 +1090,8 @@ def parrainage_page():
                 pass
 
     # 🔹 Lien de parrainage unique
-    referral_link = f"http://127.0.0.1:8080/inscription?ref={username}"
-
+    referral_link = f"{request.url_root}inscription?ref={referral_code}"
+    referral_link = referral_link.replace("http://", "https://")
     # 🔹 Rendu HTML
     return render_template(
         'parrainage.html',
@@ -1334,6 +1335,7 @@ def invest_validate(investment_id):
 def referral_page():
     """Affiche la page de parrainage avec lien et liste des filleuls."""
     import datetime
+    from flask import request
 
     user_email = get_logged_in_user_email()
     users_data = load_users_data()
@@ -1352,7 +1354,8 @@ def referral_page():
 
     # --- Génération du lien de parrainage ---
     referral_code = username
-    referral_link = f"http://127.0.0.1:8080/inscription?ref={referral_code}"
+    referral_link = f"{request.url_root}inscription?ref={referral_code}"
+    referral_link = referral_link.replace("http://", "https://")
 
     filleuls = []
     now = datetime.datetime.now()
