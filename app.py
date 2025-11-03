@@ -1090,7 +1090,8 @@ def parrainage_page():
                 pass
 
     # 🔹 Lien de parrainage unique
-    referral_link = f"{request.url_root}inscription?ref={referral_page}"
+    referral_code = username  
+    referral_link = f"{request.url_root}inscription?ref={referral_code}"
     referral_link = referral_link.replace("http://", "https://")
     # 🔹 Rendu HTML
     return render_template(
@@ -1353,6 +1354,7 @@ def referral_page():
     username = user_info.get('username', user_email.split('@')[0])
 
     # --- Génération du lien de parrainage ---
+    referral_code = username  
     referral_link = f"{request.url_root}inscription?ref={referral_code}"
     referral_link = referral_link.replace("http://", "https://")
 
