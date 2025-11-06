@@ -1,31 +1,39 @@
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime, timedelta
-import json, os, uuid
+import json, os, uuid, threading
 from werkzeug.utils import secure_filename
+from flask_sqlalchemy import SQLAlchemy
 
 # ----------------------------
 # Configuration de l'application
 # ----------------------------
 app = Flask(__name__, template_folder='templates')
-app.secret_key = 'votre_cle_secrete_tres_securisee'  # change en prod
+app.secret_key = "ma_cle_ultra_secrete_2024_preto_cash"
 app.config['UPLOAD_FOLDER'] = 'static/proofs'
 
-# Fichiers de données
+# --- Configuration PostgreSQL Render ---
+DATABASE_URL = "postgresql://presto_admin_user:j7C6is6xvR3EsV4dG6ph4Ju7NWUMurou@dpg-d45j4kf5r7bs73ajiq20-a.oregon-postgres.render.com/presto_admin"
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# --- Initialisation SQLAlchemy ---
+db = SQLAlchemy(app)
+
+# ----------------------------
+# Fichiers JSON locaux (backup)
+# ----------------------------
 DATA_DIR = "data"
 USERS_FILE = os.path.join(DATA_DIR, 'users.json')
 DEPOTS_FILE = os.path.join(DATA_DIR, 'depots_en_attente.json')
 RETRAITS_FILE = os.path.join(DATA_DIR, 'retraits_en_attente.json')
 
-# Constantes
-BONUS_PARRAINAGE = 50.0  # (si tu veux garder ce bonus en plus)
+BONUS_PARRAINAGE = 50.0
 INITIAL_BALANCE = 0.0
 VIP_DURATION_DAYS = 60
 
-# Création des dossiers si nécessaire
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
 
 # ----------------------------
 # Utilitaires JSON
@@ -39,27 +47,55 @@ def load_json(path):
     except (json.JSONDecodeError, FileNotFoundError):
         return {}
 
-
+file_lock = threading.Lock()
 def save_json(path, data):
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+    with file_lock:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
 
+# ----------------------------
+# Modèle SQLAlchemy (Utilisateur)
+# ----------------------------
+class User(db.Model):
+    __tablename__ = 'users'
 
-# Users helpers (centralisés)
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100))
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    phone = db.Column(db.String(20))
+    password = db.Column(db.String(200))
+    balance = db.Column(db.Float, default=0.0)
+    parrain = db.Column(db.String(120), nullable=True)
+    withdraw_number = db.Column(db.String(50))
+    date_inscription = db.Column(db.String(50))
+    has_made_first_deposit = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        """Convertit l'objet User en dictionnaire (utile pour compatibilité JSON)."""
+        return {
+            "username": self.username,
+            "email": self.email,
+            "phone": self.phone,
+            "password": self.password,
+            "balance": self.balance,
+            "parrain": self.parrain,
+            "withdraw_number": self.withdraw_number,
+            "date_inscription": self.date_inscription,
+            "has_made_first_deposit": self.has_made_first_deposit,
+        }
+
+# ----------------------------
+# Helpers pour compatibilité JSON
+# ----------------------------
 def load_users_data():
-    """Charge users depuis data/users.json"""
     return load_json(USERS_FILE)
-
 
 def save_users_data(data):
     save_json(USERS_FILE, data)
 
-
 def ensure_user_exists(email):
-    """
-    Si l'utilisateur n'existe pas dans users.json, le crée avec structure minimale.
-    Retourne (user_dict, users_data)
-    """
+    """Assure qu'un utilisateur existe (JSON local)."""
+    email = email.strip().lower()
     users_data = load_users_data()
     if email not in users_data:
         users_data[email] = {
@@ -73,28 +109,21 @@ def ensure_user_exists(email):
             "parrain": None,
             "investments": [],
             "has_made_first_deposit": False,
-            "date_inscription": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "date_inscription": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "withdraw_number": ""
         }
         save_users_data(users_data)
     return users_data[email], users_data
 
-
 def add_history_entry(user_email, description, montant, status, users_data=None):
-    """
-    Ajoute une entrée d'historique pour un utilisateur (et sauvegarde).
-    Compatible avec ou sans users_data (pour éviter l'erreur de trop d'arguments).
-    """
-    # Charger les données si non fournies
+    """Ajoute une entrée d'historique (JSON)."""
     if users_data is None:
         users_data = load_users_data()
 
-    # Vérifier que l'utilisateur existe
     if user_email not in users_data:
         return
 
     user = users_data[user_email]
-
-    # Préparer l'entrée
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     entry = {
         'date': timestamp,
@@ -104,18 +133,51 @@ def add_history_entry(user_email, description, montant, status, users_data=None)
         'status': status
     }
 
-    # Ajouter dans l’historique
     user.setdefault('historique', []).append(entry)
-
-    # Sauvegarder
     users_data[user_email] = user
     save_users_data(users_data)
 
 def get_logged_in_user_email():
-    """Retourne l'email de l'utilisateur connecté (session['email'])."""
     return session.get('email')
 
+# ----------------------------
+# Initialisation et migration
+# ----------------------------
+def init_db():
+    """Créer les tables PostgreSQL"""
+    with app.app_context():
+        db.create_all()
+        print("✅ Base PostgreSQL initialisée avec succès.")
 
+def migrate_users_from_json():
+    """Importer les anciens utilisateurs depuis users.json vers PostgreSQL"""
+    from sqlalchemy.exc import IntegrityError
+
+    with app.app_context():
+        users_data = load_users_data()
+        for email, u in users_data.items():
+            if not User.query.filter_by(email=email).first():
+                user = User(
+                    username=u.get("username", ""),
+                    email=email,
+                    phone=u.get("phone", ""),
+                    password=u.get("password", ""),
+                    balance=u.get("balance", 0.0),
+                    parrain=u.get("parrain"),
+                    withdraw_number=u.get("withdraw_number", ""),
+                    date_inscription=u.get("date_inscription"),
+                    has_made_first_deposit=u.get("has_made_first_deposit", False)
+                )
+                db.session.add(user)
+                try:
+                    db.session.commit()
+                    print(f"✅ Importé : {email}")
+                except IntegrityError:
+                    db.session.rollback()
+                    print(f"⚠️  Doublon ignoré : {email}")
+        print("🎉 Migration terminée.")
+
+# Connexion MongoDB
 # ----------------------------
 # Routes d'inscription / connexion
 # ----------------------------
@@ -307,8 +369,7 @@ PAYMENT_ACCOUNTS = {
 # Dépôt : sélection / soumission / preuve
 # ----------------------------
 @app.route('/deposit')
-def deposit_selection_page():
-    return render_template('deposit.html', payment_methods=PAYMENT_ACCOUNTS)
+def deposit_selection_page():                                                                             return render_template('deposit.html', payment_methods=PAYMENT_ACCOUNTS)
 
 @app.route('/deposit/<method>')
 def deposit_page(method):
@@ -464,8 +525,6 @@ PRODUITS_VIP = {
 
 @app.route('/decouvrir')
 def decouvrir_page():
-    """Affiche la liste complète des produits VIP pour tous les utilisateurs."""
-
     user_email = get_logged_in_user_email()
     all_users_data = load_users_data()
 
@@ -473,29 +532,26 @@ def decouvrir_page():
     if user_email:
         user_info = all_users_data.get(user_email)
 
-    # Si l'utilisateur n'est pas connecté, on crée un profil invité
     if user_info is None:
-        user_info = {
-            'username': 'Invité',
-            'balance': 0.0
-        }
+        user_info = {'username': 'Invité', 'balance': 0.0, 'historique': []}
 
-    # ✅ Vérification du droit d'accès aux produits VIP :
-    # L'utilisateur doit avoir investi 9000 XOF dans un produit de 60 jours avant d’accéder aux VIP
-    historique = user_info.get('mon_historique', [])
+    # Vérifie s’il est éligible : investissement >= 3000 sur un produit de 60 jours
+    historique = user_info.get('historique', [])  # <-- ici !
     eligible_vip = any(
-        "9000" in str(h.get('montant', '')) or "60 jours" in str(h.get('description', '')).lower()
+        float(h.get('montant', 0)) >= 3000 and "60" in h.get('nom', '').lower() and "jour" in h.get('nom', '').lower()
         for h in historique
     )
 
-    # Si pas éligible, on affiche un message d’accès restreint
     if not eligible_vip:
-        return render_template(
-            'decouvrir_bloque.html',
-            user_info=user_info
-        )
+        return render_template('decouvrir_bloque.html', user_info=user_info)
 
-    # Sinon on affiche les produits VIP
+    # Trace des produits VIP consultés
+    user_info['produits_vip_consultes'] = list(PRODUITS_VIP.keys())
+
+    if user_email:
+        all_users_data[user_email] = user_info
+        save_users_data(all_users_data)
+
     return render_template(
         'decouvrir.html',
         products=list(PRODUITS_VIP.values()),
@@ -570,7 +626,6 @@ def investir(product_id):
             )
          # --- Enregistre aussi dans la liste des investissements VIP ---
 
-        user_data.setdefault('investissements_vip', []).append(investment_amount)
 
         # ✅ Sauvegarde finale
         all_users_data[user_email] = user_data
@@ -646,7 +701,7 @@ VIP_PRODUITS = {
 
 @app.route('/produits_rapide')
 def produits_rapide_page():
-    """Affiche les produits rapides (3 jours) si l'utilisateur a déposé au moins 15 000 XOF."""
+    """Affiche les produits rapides (3 jours) et crédite les revenus quotidiens des investissements."""
 
     user_email = get_logged_in_user_email()
     all_users_data = load_users_data()
@@ -658,14 +713,57 @@ def produits_rapide_page():
 
     user_info = all_users_data[user_email]
 
-    # 🧾 1️⃣ Total des dépôts confirmés
+    # ===== Crédit automatique des revenus quotidiens =====
+    now = datetime.now()
+    updated = False
+
+    for investment in user_info.get('investissements_vip', []):
+        date_debut = datetime.strptime(investment['date_debut'], "%Y-%m-%d %H:%M:%S")
+        duree_jours = investment.get('duree_jours', 0)
+        date_fin = date_debut + timedelta(days=duree_jours)
+
+        if now >= date_fin:
+            # Marque comme terminé si le cycle est écoulé
+            if investment['status'] != 'Terminé':
+                investment['status'] = 'Terminé'
+                updated = True
+            continue
+
+        last_credit_str = investment.get('last_credit', investment['date_debut'])
+        last_credit = datetime.strptime(last_credit_str, "%Y-%m-%d %H:%M:%S")
+        days_passed = (now.date() - last_credit.date()).days
+
+        if days_passed > 0:
+            revenu_quotidien = investment.get('revenu_quotidien', 0)
+            total_gain = revenu_quotidien * days_passed
+
+            # ⚡️ Ajoute les gains au solde
+            user_info['balance'] = round(user_info.get('balance', 0.0) + total_gain, 2)
+
+            # Historique des gains
+            user_info.setdefault('mon_historique', []).append({
+                'date': now.strftime("%Y-%m-%d %H:%M:%S"),
+                'description': f"Revenus quotidiens {investment['nom']} ({days_passed} jours)",
+                'montant': total_gain,
+                'solde_apres': user_info['balance'],
+                'status': 'Credité'
+            })
+
+            # Met à jour la date du dernier crédit
+            investment['last_credit'] = now.strftime("%Y-%m-%d %H:%M:%S")
+            updated = True
+
+    # Sauvegarde si des gains ont été ajoutés
+    if updated:
+        all_users_data[user_email] = user_info
+        save_users_data(all_users_data)
+
+    # 🧾 Calcul du total des dépôts confirmés
     total_depots = sum(
         float(dep.get('amount', 0))
         for dep in user_info.get('deposits', [])
         if str(dep.get('status', '')).lower() in ['accepté', 'accepted', 'validé']
     )
-
-    # 🧾 2️⃣ Ajoute aussi les dépôts depuis l’historique
     total_depots += sum(
         float(h.get('montant', 0))
         for h in user_info.get('mon_historique', [])
@@ -684,12 +782,9 @@ def produits_rapide_page():
 
     produits_rapide = list(VIP_PRODUITS.values())
     return render_template('produits_rapide.html', user_info=user_info, produits=produits_rapide)
-    
 
 @app.route('/investir_rapide/<product_id>', methods=['GET', 'POST'])
 def investir_rapide(product_id):
-    """Permet d'investir dans un produit rapide (max 2 investissements par produit)."""
-
     user_email = get_logged_in_user_email()
     if not user_email:
         flash("Veuillez vous connecter pour investir.", "error")
@@ -698,89 +793,62 @@ def investir_rapide(product_id):
     users = load_users_data()
     user = users.get(user_email)
 
-    # 🧩 Trouver le produit selon son ID
-    product = None
-    if isinstance(VIP_PRODUITS, list):
-        for p in VIP_PRODUITS:
-            if isinstance(p, dict) and str(p.get("id")) == str(product_id):
-                product = p
-                break
-    elif isinstance(VIP_PRODUITS, dict):
-        product = VIP_PRODUITS.get(product_id)
+    product = VIP_PRODUITS.get(product_id) if isinstance(VIP_PRODUITS, dict) else None
 
-    # 🔍 Vérification
     if not product or not user:
         flash("Produit ou utilisateur introuvable.", "error")
         return redirect(url_for('produits_rapide_page'))
 
-    # 🔢 Vérifie le nombre d'investissements existants sur ce produit
+    # Vérifie nombre d'investissements
     existing_investments = [
-        i for i in user.get('investissements_vip', [])
-        if isinstance(i, dict) and i.get('id') == product_id
+        i for i in user.get('investissements_vip', []) if i.get('id') == product_id
     ]
     if len(existing_investments) >= 2:
         flash("❌ Vous avez déjà investi 2 fois dans ce produit.", "warning")
         return redirect(url_for('produits_rapide_page'))
 
-    if request.method == 'POST':
-        try:
-            amount = float(product.get('montant_min', 0))
-        except (TypeError, ValueError):
-            flash("Montant du produit invalide.", "error")
-            return redirect(url_for('produits_rapide_page'))
+    # GET : Affiche la page de confirmation
+    if request.method == 'GET':
+        return render_template('investir_confirm.html', product=product, user_info=user)
 
-        balance = float(user.get('balance', 0.0))
-
-        # 💰 Vérifie le solde
-        if balance < amount:
-            flash("⚠️ Solde insuffisant pour cet investissement.", "danger")
-            return redirect(url_for('produits_rapide_page'))
-
-        # 💸 Débit du solde
-        user['balance'] = round(balance - amount, 2)
-
-        # 🧾 Enregistre l’investissement
-        investment_entry = {
-            'id': product_id,
-            'nom': product.get('nom', 'Produit rapide'),
-            'montant': amount,
-            'revenu_quotidien': product.get('revenu_quotidien', 0),
-            'rendement_total': product.get('rendement_total', 0),
-            'duree_jours': product.get('duree_jours', 3),
-            'date_debut': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'status': 'En cours'
-        }
-
-        user.setdefault('investissements_vip', [])
-        # Nettoyage avant ajout
-        user['investissements_vip'] = [
-            i for i in user['investissements_vip'] if isinstance(i, dict)
-        ]
-        user['investissements_vip'].append(investment_entry)
-
-        # 🕓 Historique
-        add_history_entry(
-            user_email,
-            f"Investissement rapide : {product.get('nom', 'Produit rapide')}",
-            -amount,
-            'En cours'
-        )
-
-        # 💾 Sauvegarde
-        users[user_email] = user
-        save_users_data(users)
-
-        flash(f"✅ Vous avez investi {amount:,.0f} XOF dans {product.get('nom', 'Produit rapide')}.", "success")
+    # POST : Effectue l'investissement
+    try:
+        amount = float(product.get('montant_min', 0))
+    except (TypeError, ValueError):
+        flash("Montant du produit invalide.", "error")
         return redirect(url_for('produits_rapide_page'))
 
-    return render_template('investir.html', product=product, user_info=user)
+    balance = float(user.get('balance', 0.0))
+    if balance < amount:
+        flash("⚠️ Solde insuffisant pour cet investissement.", "danger")
+        return redirect(url_for('produits_rapide_page'))
+
+    user['balance'] = round(balance - amount, 2)
+    investment_entry = {
+        'id': product_id,
+        'nom': product.get('nom', 'Produit rapide'),
+        'montant': amount,
+        'revenu_quotidien': product.get('revenu_quotidien', 0),
+        'rendement_total': product.get('rendement_total', 0),
+        'duree_jours': product.get('duree_jours', 3),
+        'date_debut': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'status': 'En cours'
+    }
+
+    user.setdefault('investissements_vip', []).append(investment_entry)
+    add_history_entry(user_email, f"Investissement rapide : {product.get('nom')}", -amount, 'En cours')
+    users[user_email] = user
+    save_users_data(users)
+
+    flash(f"✅ Vous avez investi {amount:,.0f} XOF dans {product.get('nom')}.", "success")
+    return redirect(url_for('produits_rapide_page'))
 
 # ----------------------------
 # Retrait : sélection / soumission
 # ----------------------------
 @app.route('/mes_commandes')
 def mes_commandes_page():
-    """Affiche les investissements de l'utilisateur (en cours ou terminés)."""
+    """Affiche tous les investissements de l'utilisateur (VIP et normaux) de manière sécurisée."""
 
     user_email = get_logged_in_user_email()
     users = load_users_data()
@@ -791,13 +859,39 @@ def mes_commandes_page():
 
     user = users[user_email]
 
-    # 🧾 Récupère les investissements valides (seulement les dictionnaires)
-    commandes = [
-        i for i in user.get('investissements_vip', [])
-        if isinstance(i, dict)
-    ]
+    # Récupère tous les investissements valides (dictionnaires) depuis les deux listes
+    commandes_vip = [i for i in user.get('investissements_vip', []) if isinstance(i, dict)]
+    commandes_normales = [i for i in user.get('investments', []) if isinstance(i, dict)]
+
+    # Fusionne les deux listes
+    commandes = commandes_vip + commandes_normales
+
+    # Standardise les champs pour éviter les valeurs manquantes
+    for c in commandes:
+        # Montant investi
+        montant = c.get('montant') or c.get('amount') or 0
+        c['montant'] = float(montant) if montant is not None else 0
+
+        # Revenu quotidien
+        revenu = c.get('revenu_quotidien') or c.get('daily_income') or 0
+        c['revenu_quotidien'] = float(revenu) if revenu is not None else 0
+
+        # Rendement total
+        rendement = c.get('rendement_total') or c.get('total_return') or 0
+        c['rendement_total'] = float(rendement) if rendement is not None else 0
+
+        # Date de début
+        c['date_debut'] = c.get('date_debut') or c.get('date_investissement') or "Non défini"
+
+        # Durée en jours
+        duree = c.get('duree_jours') or c.get('days') or 0
+        c['duree_jours'] = int(duree) if duree is not None else 0
+
+        # Statut
+        c['statut'] = c.get('statut') or c.get('status') or "En cours"
 
     return render_template('mes_commandes.html', commandes=commandes, user_info=user)
+
 @app.route('/retrait', methods=['GET', 'POST'])
 def retrait_selection():
     email = get_logged_in_user_email()  # récupère l'utilisateur connecté
@@ -808,15 +902,79 @@ def retrait_selection():
 
     user = users_data[email]
 
-    # Méthodes disponibles selon le pays ou crypto
+# Somme totale des dépôts non retirables
+    total_deposits = sum(d['amount'] for d in user.get('deposits', []))
+
+# Somme des investissements actuels (montants prélevés)
+    total_investments = sum(d['montant'] for d in user.get('historique', []) if "plan_60_jours" in d.get('nom', '').lower())
+
+# Calcul du montant de dépôt restant non retirables
+    remaining_non_withdrawable = max(total_deposits - total_investments, 0)
+
+# Solde total actuel
+    total_balance = user.get('balance', 0.0)
+
+# Solde retirable = total_balance moins les dépôts non retirables restants
+    withdrawable_balance = total_balance - remaining_non_withdrawable
+
+# S’assurer que le solde retirable n’est jamais négatif
+    withdrawable_balance = max(withdrawable_balance, 0.0)
+
+    # Liste des moyens de retrait disponibles
     methods = [
-        "Mobile Money Bénin", "Mobile Money Burkina Faso", "Mobile Money Cameroun",
-        "Mobile Money Sénégal", "Mobile Money Mali", "Mobile Money Gabon",
-        "Mobile Money Côte d'Ivoire", "Mobile Money Togo", "Mobile Money Ouganda", "Mobile Money RD Congo",
-        "Mobile Money Zambie", "Crypto BEP20"
+        "Moov Money", "MTN", "Mix by YAS", "Orange Money",
+        "Airtel", "Vodacom", "Crypto BEP20"
     ]
 
-    return render_template('retrait.html', user=user, methods=methods)
+    if request.method == 'POST':
+        amount = request.form.get('amount')
+        method = request.form.get('method')
+
+        try:
+            amount = float(amount)
+            if amount < 1500:
+                return "Le montant minimum de retrait est de 1500 XOF.", 400
+            if amount > withdrawable_balance:
+                return "Solde disponible pour retrait insuffisant.", 400
+        except (ValueError, TypeError):
+            return "Montant invalide.", 400
+
+        # Débit du solde total
+        user['balance'] -= amount
+
+        # Crée la transaction
+        transaction_id = str(uuid.uuid4())
+        transaction = {
+            'id': transaction_id,
+            'amount': amount,
+            'method': method,
+            'address_or_number': user.get('phone', ''),
+            'status': 'En attente',
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        # Ajout historique
+        user.setdefault('transactions', []).append(transaction)
+        user.setdefault('mon_historique', []).append({
+            'date': transaction['timestamp'],
+            'description': f"Retrait {method}",
+            'montant': -amount,
+            'solde_apres': user['balance'],
+            'status': 'En attente'
+        })
+
+        users_data[email] = user
+        save_users_data(users_data)
+
+        return redirect(url_for('retrait_success',
+                                transaction_id=transaction_id,
+                                amount=amount,
+                                method=method,
+                                address_or_number=user.get('phone', '')))
+
+    # Sinon : affichage du formulaire
+    return render_template('retrait.html', user=user, methods=methods, withdrawable_balance=withdrawable_balance)
+
 
 @app.route('/process_retrait', methods=['POST'])
 def process_retrait():
@@ -842,10 +1000,10 @@ def process_retrait():
     except (ValueError, TypeError):
         return "Montant invalide.", 400
 
-    # Débit provisoire du solde
+    # --- Débit provisoire du solde ---
     user['balance'] -= amount
 
-    # Ajouter la transaction à l'historique
+    # --- Enregistrement de la transaction ---
     transaction_id = str(uuid.uuid4())
     transaction = {
         'id': transaction_id,
@@ -855,6 +1013,7 @@ def process_retrait():
         'status': 'En attente',
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
+
     user.setdefault('transactions', []).append(transaction)
     user.setdefault('mon_historique', []).append({
         'date': transaction['timestamp'],
@@ -873,7 +1032,6 @@ def process_retrait():
                             method=method,
                             address_or_number=address_or_number))
 
-
 @app.route('/retrait_success')
 def retrait_success():
     transaction_id = request.args.get('transaction_id')
@@ -886,12 +1044,47 @@ def retrait_success():
     except (ValueError, TypeError):
         amount = 0.0
 
-    return render_template('retrait_success.html',
-                           transaction_id=transaction_id,
-                           amount=amount,
-                           method=method,
-                           address_or_number=address_or_number,
-                           timestamp=timestamp)
+    return render_template(
+        'retrait_success.html',
+        transaction_id=transaction_id,
+        amount=amount,
+        method=method,
+        address_or_number=address_or_number,
+        timestamp=timestamp
+    )
+@app.route('/modifier_portefeuille', methods=['GET', 'POST'])
+def modifier_portefeuille():
+    email = get_logged_in_user_email()
+    users_data = load_users_data()
+
+    if not email or email not in users_data:
+        return redirect(url_for('connexion'))
+
+    user = users_data[email]
+    methods = [
+        "Mobile Money Bénin", "Mobile Money Burkina Faso", "Mobile Money Cameroun",
+        "Mobile Money Sénégal", "Mobile Money Mali", "Mobile Money Gabon",
+        "Mobile Money Côte d'Ivoire", "Mobile Money Togo", "Mobile Money Ouganda",
+        "Mobile Money RD Congo", "Mobile Money Zambie", "Crypto BEP20"
+    ]
+
+    if request.method == 'POST':
+        wallet_country = request.form.get('wallet_country')
+        wallet_method = request.form.get('wallet_method')
+        wallet_number = request.form.get('wallet_number')
+
+        user['wallet_info'] = {
+            "country": wallet_country,
+            "method": wallet_method,
+            "number": wallet_number
+        }
+
+        users_data[email] = user
+        save_users_data(users_data)
+
+        return redirect(url_for('retrait_selection'))
+
+    return render_template('modifier_portefeuille.html', user=user, methods=methods)
 # ----------------------------
 # Admin: lister / valider / rejeter dépôts
 # (Important: ici il n'y a PAS d'auth admin; protège ces routes en prod)
@@ -1189,25 +1382,26 @@ def historique_page():
 
 INVESTMENT_PLANS = {
     "plan_60_jours": {
-        "VIP1": {"investissement": 3000, "gain_quotidien": 300, "duree_jours": 60},
-        "VIP2": {"investissement": 9000, "gain_quotidien": 900, "duree_jours": 60},
-        "VIP3": {"investissement": 15000, "gain_quotidien": 1500, "duree_jours": 60},
-        "VIP4": {"investissement": 30000, "gain_quotidien": 3000, "duree_jours": 60},
-        "VIP5": {"investissement": 90000, "gain_quotidien": 9000, "duree_jours": 60},
-        "VIP6": {"investissement": 150000, "gain_quotidien": 15000, "duree_jours": 60},
-        "VIP7": {"investissement": 300000, "gain_quotidien": 30000, "duree_jours": 60},
-        "VIP8": {"investissement": 900000, "gain_quotidien": 90000, "duree_jours": 60},
+        "VIP1": {"investissement": 3000, "duree_jours": 60, "gain_quotidien": 600, "gain_total": 36000},
+        "VIP2": {"investissement": 9000, "duree_jours": 60, "gain_quotidien": 1800, "gain_total": 108000},
+        "VIP3": {"investissement": 15000, "duree_jours": 60, "gain_quotidien": 3000, "gain_total": 180000},
+        "VIP4": {"investissement": 30000, "duree_jours": 60, "gain_quotidien": 6000, "gain_total": 360000},
+        "VIP5": {"investissement": 90000, "duree_jours": 60, "gain_quotidien": 18000, "gain_total": 1080000},
+        "VIP6": {"investissement": 150000, "duree_jours": 60, "gain_quotidien": 30000, "gain_total": 1800000},
+        "VIP7": {"investissement": 300000, "duree_jours": 60, "gain_quotidien": 60000, "gain_total": 3600000},
+        "VIP8": {"investissement": 900000, "duree_jours": 60, "gain_quotidien": 180000, "gain_total": 10800000},
     },
     "plan_bien_etre": {
-        "VIP1": {"investissement": 3000, "gain_total": 18000, "duree_jours": 30},
-        "VIP2": {"investissement": 9000, "gain_total": 54000, "duree_jours": 30},
-        "VIP3": {"investissement": 25000, "gain_total": 150000, "duree_jours": 30},
-        "VIP4": {"investissement": 45000, "gain_total": 270000, "duree_jours": 30},
+        "VIP1": {"investissement": 5000, "duree_jours": 30, "gain_quotidien": 500, "gain_total": 15000},
+        "VIP2": {"investissement": 12000, "duree_jours": 30, "gain_quotidien": 1200, "gain_total": 36000},
+        "VIP3": {"investissement": 25000, "duree_jours": 30, "gain_quotidien": 2500, "gain_total": 75000},
+        "VIP4": {"investissement": 45000, "duree_jours": 30, "gain_quotidien": 4500, "gain_total": 135000},
     }
 }
 
 @app.route('/investi', methods=['GET', 'POST'])
 def investi_page():
+    """Page pour effectuer un investissement."""
     email = get_logged_in_user_email()
     if not email:
         flash("Veuillez vous connecter pour investir.", "error")
@@ -1231,7 +1425,7 @@ def investi_page():
             plan_type = "_".join(plan_parts[:-1])
             plan = INVESTMENT_PLANS[plan_type][vip_level]
             cost = plan['investissement']
-        except:
+        except Exception:
             message = {"type": "error", "text": "Plan invalide."}
             return render_template('investi.html', plans=INVESTMENT_PLANS, user_solde=current_solde, message=message)
 
@@ -1241,18 +1435,21 @@ def investi_page():
             # Débite le solde
             user['balance'] = round(current_solde - cost, 2)
 
-            # Crée l'investissement
+            # Crée l'investissement avec clés standardisées
             new_investment = {
                 "id": str(uuid.uuid4()),
-                "plan_id": plan_id,
-                "cout": cost,
+                "nom": f"{vip_level} ({plan_type})",          # Nom pour le template
+                "montant": cost,                              # Montant investi
                 "date_debut": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "date_fin": (datetime.now() + timedelta(days=plan['duree_jours'])).strftime("%Y-%m-%d %H:%M:%S"),
+                "duree_jours": plan['duree_jours'],
                 "statut": "actif",
-                "gain_quotidien": plan.get('gain_quotidien', 0),
-                "gain_total": plan.get('gain_total', 0)
+                "revenu_quotidien": plan.get('gain_quotidien', 0),
+                "rendement_total": plan.get('gain_total', 0),
+                "plan_id": plan_id
             }
 
+            # Ajoute l'investissement à l'utilisateur
             user.setdefault('investments', []).append(new_investment)
 
             # Ajoute l'historique
@@ -1322,7 +1519,7 @@ def invest_validate(investment_id):
         return redirect(url_for('investi_page'))
 
     # Mettre à jour le statut et enregistrer dans l’historique
-    investment['statut'] = 'Confirmé'
+    investment['statut'] = 'En cours'
     if 'historique' not in user:
         user['historique'] = []
     user['historique'].append(investment)

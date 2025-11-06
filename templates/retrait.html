@@ -1,28 +1,32 @@
 {% extends "layout.html" %}
-
 {% block title %}Demande de Retrait{% endblock %}
 
 {% block content %}
 <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-yellow-500
-            transform transition-all duration-500 ease-out opacity-0 translate-y-10 animate-fadeIn">
+            transform transition-all duration-700 ease-out opacity-0 translate-y-10 animate-fadeIn
+            hover:shadow-yellow-200/70 hover:-translate-y-1">
 
-    <h2 class="text-3xl font-extrabold text-gray-900 mb-6 text-center tracking-wide">Demande de Retrait</h2>
+    <h2 class="text-3xl font-extrabold text-gray-900 mb-8 text-center tracking-wide animate-slideDown">
+        💳 Demande de Retrait
+    </h2>
 
-    <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-5 mb-6 rounded-xl
-                transform transition-transform duration-300 hover:scale-[1.02]">
-        <p class="font-semibold text-lg mb-1">Votre Solde Disponible :</p>
-        <p class="text-2xl font-bold">{{ "{:,.2f}".format(user.balance) | replace(",", " ") }} XOF</p>
+    <!-- Solde Disponible pour retrait -->
+    <div class="bg-gradient-to-r from-yellow-100 to-yellow-50 border-l-4 border-yellow-500 text-gray-800 p-5 mb-4 rounded-xl
+                transform transition-all duration-500 hover:scale-[1.03] hover:shadow-md animate-popIn">
+        <p class="font-semibold text-lg mb-1">Solde Disponible pour Retrait :</p>
+        <p class="text-3xl font-extrabold text-yellow-600">
+            {{ "{:,.2f}".format(withdrawable_balance) | replace(",", " ") }} XOF
+        </p>
     </div>
 
-    <form method="POST" action="{{ url_for('process_retrait') }}">
+    <form method="POST" action="{{ url_for('process_retrait') }}" class="space-y-6 animate-fadeSlideUp">
         <!-- Pays -->
-        <div class="mb-5">
+        <div>
             <label for="country" class="block text-sm font-medium text-gray-700 mb-2">Pays</label>
             <select id="country" name="country" required
-                    class="w-full px-5 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
-                           transition duration-300 transform hover:scale-[1.01]">
+                    class="w-full px-5 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
+                           transition-all duration-300 transform hover:scale-[1.01] bg-gray-50">
                 <option value="">Sélectionner un pays</option>
-                <option value="Canada">Canada</option>
                 <option value="Benin">Bénin</option>
                 <option value="Togo">Togo</option>
                 <option value="Burkina Faso">Burkina Faso</option>
@@ -38,57 +42,100 @@
         </div>
 
         <!-- Méthode de paiement -->
-        <div class="mb-5">
+        <div>
             <label for="method" class="block text-sm font-medium text-gray-700 mb-2">Méthode de Retrait</label>
             <select id="method" name="method" required
-                    class="w-full px-5 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
-                           transition duration-300 transform hover:scale-[1.01]">
+                    class="w-full px-5 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
+                           transition-all duration-300 transform hover:scale-[1.01] bg-gray-50">
                 <option value="">Sélectionner une méthode</option>
-                <option value="mobile_money">Moov Money</option>
-                <option value="mobile_money">MTN</option>
-                <option value="mobile_money">Orange Money</option>
-                <option value="mobile_money">Mix by yas</option>
-                <option value="crypto_bep20">Crypto BEP20</option>
-                <option value="mobile_money">Airtel</option>
-                <option value="mobile_money">Vodacom</option>
+                <option value="Moov Money">Moov Money</option>
+                <option value="MTN Money">MTN</option>
+                <option value="Orange Money">Orange Money</option>
+                <option value="Mix by YAS">Mix by YAS</option>
+                <option value="Crypto BEP20">Crypto BEP20</option>
+                <option value="Airtel Money">Airtel</option>
+                <option value="Vodacom Money">Vodacom</option>
             </select>
         </div>
 
         <!-- Numéro Mobile ou Adresse Crypto -->
-        <div class="mb-6">
-            <label for="address_or_number" class="block text-sm font-medium text-gray-700 mb-2">Numéro Mobile ou Adresse Crypto</label>
-            <input type="text" id="address_or_number" name="address_or_number" required
+        <div>
+            <label for="address_or_number" class="block text-sm font-medium text-gray-700 mb-2">
+                Numéro Mobile ou Adresse Crypto
+            </label>
+
+            <input type="text" id="address_or_number" name="address_or_number"
+                   value="{{ user.withdrawal_number if user.withdrawal_number else '' }}"
                    placeholder="Entrez votre numéro ou adresse"
-                   class="w-full px-5 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
-                          transition duration-300 transform hover:scale-[1.01]">
+                   required
+                   class="w-full px-5 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
+                          transition-all duration-300 transform hover:scale-[1.01] bg-gray-50"
+                   {% if user.withdrawal_number %}readonly{% endif %}>
+
+            {% if user.withdrawal_number %}
+            <button type="button"
+                    onclick="enableEdit()"
+                    class="mt-2 text-sm text-blue-600 underline hover:text-blue-800 transition-all duration-300 hover:scale-[1.05]">
+                Modifier mon numéro de retrait
+            </button>
+            {% endif %}
         </div>
 
         <!-- Montant -->
-        <div class="mb-6">
-            <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">Montant à Retirer (XOF / USD)</label>
+        <div>
+            <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">Montant à Retirer</label>
+            <p class="text-sm text-gray-600 mb-2">
+                Montant maximum autorisé : {{ "{:,.2f}".format(withdrawable_balance) | replace(",", " ") }} XOF
+            </p>
             <input type="number" step="0.01" id="amount" name="amount" required
                    placeholder="Ex: 1500.00"
-                   min="1500" max="{{ user.balance }}"
-                   class="w-full px-5 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
-                          transition duration-300 transform hover:scale-[1.01]">
+                   min="1500" max="{{ withdrawable_balance }}"
+                   class="w-full px-5 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
+                          transition-all duration-300 transform hover:scale-[1.01] bg-gray-50">
         </div>
 
-        <button type="submit"
-                class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-xl shadow-lg
-                       transition duration-300 transform hover:scale-[1.03]">
-            Soumettre le Retrait
-        </button>
+        <!-- Bouton -->
+        <div class="pt-2">
+            <button type="submit"
+                    class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600
+                           text-gray-900 font-bold py-3 px-6 rounded-xl shadow-lg
+                           transition-all duration-300 transform hover:scale-[1.04] hover:shadow-yellow-300/60 active:scale-[0.98]">
+                🚀 Soumettre le Retrait
+            </button>
+        </div>
     </form>
 </div>
 
-<!-- Animation fadeIn -->
+<!-- Animations personnalisées -->
 <style>
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); opacity: 1; }
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-30px); }
     to { opacity: 1; transform: translateY(0); }
 }
-.animate-fadeIn {
-    animation: fadeIn 0.6s forwards;
+@keyframes popIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 0.7s ease-out forwards; }
+.animate-slideDown { animation: slideDown 0.8s ease-out forwards; }
+.animate-popIn { animation: popIn 0.6s ease-out forwards; }
+.animate-fadeSlideUp { animation: fadeSlideUp 0.7s ease-out forwards; }
 </style>
+
+<script>
+function enableEdit() {
+    const input = document.getElementById('address_or_number');
+    input.removeAttribute('readonly');
+    input.classList.add("bg-white", "border-yellow-400");
+    input.focus();
+}
+</script>
 {% endblock %}

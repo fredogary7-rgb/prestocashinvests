@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation Investissement - PrestoCash</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ede7f6, #e3f2fd);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+
+    .confirm-card {
+      background: white;
+      border-radius: 20px;
+      padding: 30px 40px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      animation: fadeSlideIn 1s ease forwards;
+    }
+
+    h1 {
+      color: #1a237e;
+      margin-bottom: 15px;
+    }
+
+    .product-details p {
+      font-size: 16px;
+      margin: 8px 0;
+      color: #333;
+    }
+
+    .buttons {
+      margin-top: 25px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .btn-confirm, .btn-cancel {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-confirm {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .btn-confirm:hover {
+      background-color: #388e3c;
+      transform: translateY(-2px);
+    }
+
+    .btn-cancel {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .btn-cancel:hover {
+      background-color: #d32f2f;
+      transform: translateY(-2px);
+    }
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .notice {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="confirm-card">
+    <h1>🚀 Confirmer votre investissement</h1>
+
+    <div class="product-details">
+      <p><strong>Produit :</strong> {{ product.nom }}</p>
+      <p><strong>Montant :</strong> {{ "%.0f"|format(product.montant_min) }} XOF</p>
+      <p><strong>Durée :</strong> {{ product.duree_jours }} jours</p>
+      <p><strong>Revenu quotidien :</strong> {{ "%.0f"|format(product.revenu_quotidien) }} XOF</p>
+      <p><strong>Total à la fin :</strong> {{ "%.0f"|format(product.rendement_total) }} XOF</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('investir_rapide', product_id=product.id) }}">
+      <div class="buttons">
+        <button type="submit" class="btn-confirm">Confirmer ✅</button>
+        <a href="{{ url_for('produits_rapide_page') }}">
+          <button type="button" class="btn-cancel">Annuler ❌</button>
+        </a>
+      </div>
+    </form>
+
+    <p class="notice">Vos gains seront crédités quotidiennement pendant la durée du produit.</p>
+  </div>
+</body>
+</html>

@@ -44,6 +44,7 @@
     img {
       width: 80px;
       height: 80px;
+      object-fit: contain;
     }
 
     button {
@@ -66,7 +67,7 @@
       color: #333;
       font-size: 15px;
       margin-top: 10px;
-      line-height: 1.6;
+      line-height: 1.8;
     }
 
     @keyframes fadeIn {
@@ -87,7 +88,7 @@
   <div class="products-container">
     {% for produit in produits %}
       <div class="product-card">
-        <img src="{{ url_for('static', filename='images/' ~ produit.image_url) }}" alt="{{ produit.nom }}">
+        <img src="{{ url_for('static', filename='images/' ~ (produit.image_url or 'default.png')) }}" alt="{{ produit.nom or 'Produit rapide' }}">
         <h3>{{ produit.nom }}</h3>
         <div class="details">
           <p><strong>Montant :</strong> {{ "%.0f"|format(produit.montant_min) }} XOF</p>
@@ -95,9 +96,9 @@
           <p><strong>Revenu quotidien :</strong> {{ "%.0f"|format(produit.revenu_quotidien) }} XOF</p>
           <p><strong>Total à la fin :</strong> {{ "%.0f"|format(produit.rendement_total) }} XOF</p>
         </div>
-        <form action="{{ url_for('investir_rapide', product_id=produit.id) }}" method="POST">
-          <button type="submit">🚀 Investir</button>
-        </form>
+       <a href="{{ url_for('investir_rapide', product_id=produit.id) }}">
+          <button type="button">🚀 Investir</button>
+       </a>
       </div>
     {% endfor %}
   </div>

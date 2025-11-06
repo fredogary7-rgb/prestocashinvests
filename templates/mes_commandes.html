@@ -185,26 +185,36 @@
         <button class="filter-btn" onclick="filterCommandes('en-cours')">En cours</button>
         <button class="filter-btn" onclick="filterCommandes('termine')">Terminés</button>
     </div>
+{% if commandes and commandes|length > 0 %}
+    <div class="commandes-container" id="commandes-list">
+        {% for cmd in commandes %}
+            <div class="commande-card {% if 'cours' in cmd.statut|lower %}en-cours{% else %}termine{% endif %}">
+                <h3>{{ cmd.nom or "Nom non défini" }}</h3>
 
-    {% if commandes and commandes|length > 0 %}
-        <div class="commandes-container" id="commandes-list">
-            {% for cmd in commandes %}
-                <div class="commande-card {% if 'cours' in (cmd.statut or cmd.status or '')|lower %}en-cours{% else %}termine{% endif %}">
-                    <h3>{{ cmd.nom }}</h3>
-                    <p>💰 Montant investi : <strong>{{ "{:,.0f}".format(cmd.montant) }} XOF</strong></p>
-                    <p>📅 Début : {{ cmd.date_debut or cmd.date_investissement }}</p>
-                    <p>⏱ Durée : {{ cmd.duree_jours }} jours</p>
-                    <p>💸 Revenu quotidien : {{ cmd.revenu_quotidien or "Non défini" }}</p>
-                    <p>📈 Rendement total : {{ cmd.rendement_total or "Non défini" }}</p>
-                    <p class="status {% if 'cours' in (cmd.statut or cmd.status or '')|lower %}en-cours{% else %}termine{% endif %}">
-                        {{ cmd.statut or cmd.status or 'En cours' }}
-                    </p>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="no-commande">😕 Aucun investissement trouvé pour le moment.<br>Investissez dès maintenant pour commencer à générer des revenus.</p>
-    {% endif %}
+                <p>💰 Montant investi :
+                    <strong>
+                        {% if cmd.montant is defined and cmd.montant is not none %}
+                            {{ "{:,.0f}".format(cmd.montant) }} XOF
+                        {% else %}
+                            Non défini
+                        {% endif %}
+                    </strong>
+                </p>
+
+                <p>📅 Début : {{ cmd.date_debut or "Non défini" }}</p>
+                <p>⏱ Durée : {{ cmd.duree_jours or "Non défini" }} jours</p>
+                <p>💸 Revenu quotidien : {{ cmd.revenu_quotidien if cmd.revenu_quotidien is not none else "Non défini" }}</p>
+                <p>📈 Rendement total : {{ cmd.rendement_total if cmd.rendement_total is not none else "Non défini" }}</p>
+
+                <p class="status {% if 'cours' in cmd.statut|lower %}en-cours{% else %}termine{% endif %}">
+                    {{ cmd.statut or "En cours" }}
+                </p>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="no-commande">😕 Aucun investissement trouvé pour le moment.<br>Investissez dès maintenant pour commencer à générer des revenus.</p>
+{% endif %}
 
     <div class="back-container">
         <a href="{{ url_for('dashboard_page') }}" class="back-link">← Retour au tableau de bord</a>

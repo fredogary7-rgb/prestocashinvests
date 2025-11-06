@@ -18,9 +18,6 @@
             <h1 class="text-xl font-bold">PrestoCash</h1>
             <nav>
                 <a href="{{ url_for('dashboard_page') }}" class="mx-2 hover:text-blue-400">Accueil</a>
-                {% if g.user_id == ADMIN_ID %}
-                    <a href="{{ url_for('admin_retraits') }}" class="mx-2 hover:text-red-400 font-semibold">Admin Retraits</a>
-                {% endif %}
                 {% if g.user_info %}
                     <a href="{{ url_for('withdraw_selection') }}" class="mx-2 hover:text-yellow-400">Retrait</a>
                     <a href="{{ url_for('historique_page') }}" class="mx-2 hover:text-blue-400">Historique</a>
