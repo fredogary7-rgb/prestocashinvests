@@ -1,0 +1,55 @@
+{
+    "prestocashfinance0@gmail.com": {
+        "username": "prestocash",
+        "email": "prestocashfinance0@gmail.com",
+        "phone": "",
+        "password": "123",
+        "balance": 300.0,
+        "historique": [
+            {
+                "date": "2025-11-06 20:10:42",
+                "description": "Bonus inscription",
+                "montant": 300,
+                "solde_apres": 300.0,
+                "status": "Credité"
+            }
+        ],
+        "transactions": [],
+        "parrain": null,
+        "investments": [],
+        "has_made_first_deposit": false,
+        "date_inscription": "2025-11-06 20:10:42"
+    },
+    "test@prestocash.com": {
+        "username": "test",
+        "email": "test@prestocash.com",
+        "phone": "+22871339325",
+        "password": "123",
+        "balance": 350.0,
+        "historique": [
+            {
+                "date": "2025-11-06 20:32:22",
+                "description": "Bonus inscription",
+                "montant": 300,
+                "solde_apres": 300.0,
+                "status": "Credité"
+            }
+        ],
+        "transactions": [],
+        "parrain": null,
+        "investments": [],
+        "has_made_first_deposit": false,
+        "date_inscription": "2025-11-06 20:32:22",
+        "last_bonus_date": "2025-11-06",
+        "mon_historique": [
+            {
+                "date": "06-11-2025 20:32:40",
+                "description": "Bonus Quotidien réclamé",
+                "montant": 50.0,
+                "type": "credit",
+                "status": "Validé",
+                "solde_apres": 350.0
+            }
+        ]
+    }
+}

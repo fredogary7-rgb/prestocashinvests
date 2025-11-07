@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Confirmer le Retrait{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-2xl border-t-4 border-blue-400 mt-10 animate-fadeIn">
+    <h2 class="text-2xl font-semibold text-center mb-4">Confirmation du Retrait</h2>
+
+    <form method="POST" action="{{ url_for('confirmer_retrait') }}">
+        <p><strong>Montant demandé :</strong> {{ amount }} XOF</p>
+        <p><strong>Frais (10%) :</strong> {{ frais }} XOF</p>
+        <p><strong>Montant net reçu :</strong> {{ net_amount }} XOF</p>
+        <p><strong>Méthode :</strong> {{ method }}</p>
+        <p><strong>Adresse / Numéro :</strong> {{ address_or_number }}</p>
+
+        <input type="hidden" name="amount" value="{{ amount }}">
+        <input type="hidden" name="method" value="{{ method }}">
+        <input type="hidden" name="address_or_number" value="{{ address_or_number }}">
+
+        <button type="submit" class="mt-4 w-full bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600">
+            Confirmer le retrait
+        </button>
+    </form>
+
+    <a href="{{ url_for('retrait_selection') }}" class="block text-center mt-3 text-gray-600 hover:underline">
+        Annuler et revenir
+    </a>
+</div>
+{% endblock %}

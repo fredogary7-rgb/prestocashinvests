@@ -2,6 +2,7 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime, timedelta
 import json, os, uuid, threading
+
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 
@@ -13,7 +14,7 @@ app.secret_key = "ma_cle_ultra_secrete_2024_preto_cash"
 app.config['UPLOAD_FOLDER'] = 'static/proofs'
 
 # --- Configuration PostgreSQL Render ---
-DATABASE_URL = "postgresql://presto_admin_user:j7C6is6xvR3EsV4dG6ph4Ju7NWUMurou@dpg-d45j4kf5r7bs73ajiq20-a.oregon-postgres.render.com/presto_admin"
+DATABASE_URL = "postgresql+psycopg://presto_admin_user:j7C6is6xvR3EsV4dG6ph4Ju7NWUMurou@dpg-d45j4kf5r7bs73ajiq20-a.oregon-postgres.render.com/presto_admin"
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -189,26 +190,42 @@ def inscription_page():
     users_data = load_users_data()
 
     if request.method == 'POST':
-        username = request.form.get('username')
+        username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password')
-        phone = request.form.get('phone', '')
+        password = request.form.get('password', '').strip()
+        country_code = request.form.get('country_code', '').strip()
+        phone_number = request.form.get('phone_number', '').strip()
         parrainage_code = request.form.get('referral_code', referral_code)
 
-        if not email or not password:
-            message = {"type": "error", "text": "Email et mot de passe requis."}
+        # ✅ Création du numéro complet
+        phone = f"{country_code}{phone_number}" if country_code and phone_number else ""
+
+        # ✅ Validation basique des champs
+        if not email or not password or not phone:
+            message = {"type": "error", "text": "Tous les champs sont requis (email, mot de passe, téléphone)."}
             return render_template('inscription.html', message=message, referral_code=referral_code)
 
         if email in users_data:
             message = {"type": "error", "text": "Cet email est déjà enregistré."}
         else:
+            # ✅ Crédit initial de 300 XOF
+            initial_balance = INITIAL_BALANCE + 300
+
             users_data[email] = {
                 "username": username or email.split('@')[0],
                 "email": email,
                 "phone": phone,
-                "password": password,          # ⚠️ à hasher en production
-                "balance": INITIAL_BALANCE,
-                "historique": [],
+                "password": password,  # ⚠️ à hasher en production
+                "balance": initial_balance,
+                "historique": [
+                    {
+                        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "description": "Bonus inscription",
+                        "montant": 300,
+                        "solde_apres": initial_balance,
+                        "status": "Credité"
+                    }
+                ],
                 "transactions": [],
                 "parrain": parrainage_code if parrainage_code else None,
                 "investments": [],
@@ -216,20 +233,20 @@ def inscription_page():
                 "date_inscription": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
 
-            # Si parrain valide, on peut ajouter le filleul à une liste si souhaité.
+            # ✅ Gestion du parrainage
             if parrainage_code and parrainage_code in users_data:
-                # Optionnel : ajouter field 'filleuls' si absent
                 users_data.setdefault(parrainage_code, {}).setdefault('filleuls', [])
-                users_data[parrainage_code].setdefault('filleuls', []).append(email)
+                users_data[parrainage_code]['filleuls'].append(email)
 
             save_users_data(users_data)
-            # Connexion auto après inscription
+
+            # ✅ Connexion automatique après inscription
             session['email'] = email
-            flash("Inscription réussie !", "success")
+            flash("Inscription réussie ! Vous avez reçu 300 XOF de bonus.", "success")
             return redirect(url_for('dashboard_page'))
 
+    # ✅ Correction de la dernière ligne : variable mal orthographiée
     return render_template('inscription.html', message=message, referral_code=referral_code)
-
 
 @app.route('/connexion', methods=['GET', 'POST'])
 def connexion():
@@ -894,143 +911,118 @@ def mes_commandes_page():
 
 @app.route('/retrait', methods=['GET', 'POST'])
 def retrait_selection():
-    email = get_logged_in_user_email()  # récupère l'utilisateur connecté
+    email = get_logged_in_user_email()
     users_data = load_users_data()
 
     if not email or email not in users_data:
-        return redirect(url_for('connexion'))  # redirige si non connecté
+        return redirect(url_for('connexion'))
 
     user = users_data[email]
 
-# Somme totale des dépôts non retirables
+    # --- Calculs du solde retirable ---
     total_deposits = sum(d['amount'] for d in user.get('deposits', []))
-
-# Somme des investissements actuels (montants prélevés)
     total_investments = sum(d['montant'] for d in user.get('historique', []) if "plan_60_jours" in d.get('nom', '').lower())
-
-# Calcul du montant de dépôt restant non retirables
     remaining_non_withdrawable = max(total_deposits - total_investments, 0)
-
-# Solde total actuel
     total_balance = user.get('balance', 0.0)
+    withdrawable_balance = max(total_balance - remaining_non_withdrawable, 0.0)
 
-# Solde retirable = total_balance moins les dépôts non retirables restants
-    withdrawable_balance = total_balance - remaining_non_withdrawable
-
-# S’assurer que le solde retirable n’est jamais négatif
-    withdrawable_balance = max(withdrawable_balance, 0.0)
-
-    # Liste des moyens de retrait disponibles
+    # --- Moyens de retrait disponibles ---
     methods = [
         "Moov Money", "MTN", "Mix by YAS", "Orange Money",
         "Airtel", "Vodacom", "Crypto BEP20"
     ]
 
+    # Étape 1 : affichage ou validation partielle (confirmation)
     if request.method == 'POST':
-        amount = request.form.get('amount')
-        method = request.form.get('method')
-
         try:
-            amount = float(amount)
+            amount = float(request.form.get('amount'))
+            method = request.form.get('method')
+
             if amount < 1500:
                 return "Le montant minimum de retrait est de 1500 XOF.", 400
             if amount > withdrawable_balance:
                 return "Solde disponible pour retrait insuffisant.", 400
+
+            # --- Calcul du frais de 10 % ---
+            frais = round(amount * 0.10, 2)
+            net_amount = round(amount - frais, 2)
+
+            # --- Page de confirmation ---
+            return render_template(
+                'confirmer_retrait.html',
+                amount=amount,
+                frais=frais,
+                net_amount=net_amount,
+                method=method,
+                address_or_number=user.get('phone', '')
+            )
         except (ValueError, TypeError):
             return "Montant invalide.", 400
 
-        # Débit du solde total
-        user['balance'] -= amount
-
-        # Crée la transaction
-        transaction_id = str(uuid.uuid4())
-        transaction = {
-            'id': transaction_id,
-            'amount': amount,
-            'method': method,
-            'address_or_number': user.get('phone', ''),
-            'status': 'En attente',
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        # Ajout historique
-        user.setdefault('transactions', []).append(transaction)
-        user.setdefault('mon_historique', []).append({
-            'date': transaction['timestamp'],
-            'description': f"Retrait {method}",
-            'montant': -amount,
-            'solde_apres': user['balance'],
-            'status': 'En attente'
-        })
-
-        users_data[email] = user
-        save_users_data(users_data)
-
-        return redirect(url_for('retrait_success',
-                                transaction_id=transaction_id,
-                                amount=amount,
-                                method=method,
-                                address_or_number=user.get('phone', '')))
-
-    # Sinon : affichage du formulaire
+    # Sinon (GET) : formulaire de retrait
     return render_template('retrait.html', user=user, methods=methods, withdrawable_balance=withdrawable_balance)
 
 
-@app.route('/process_retrait', methods=['POST'])
-def process_retrait():
+@app.route('/confirmer_retrait', methods=['POST'])
+def confirmer_retrait():
+    """Validation finale du retrait après confirmation"""
     user_email = get_logged_in_user_email()
     if not user_email:
         return redirect(url_for('connexion'))
 
-    users = load_users_data()
-    user = users.get(user_email)
+    users_data = load_users_data()
+    user = users_data.get(user_email)
     if not user:
         return redirect(url_for('connexion'))
 
-    amount = request.form.get('amount')
-    method = request.form.get('method')
-    address_or_number = request.form.get('address_or_number')
-
     try:
-        amount = float(amount)
+        amount = float(request.form.get('amount'))
+        frais = round(amount * 0.10, 2)
+        net_amount = round(amount - frais, 2)
+        method = request.form.get('method')
+        address_or_number = request.form.get('address_or_number')
+
         if amount < 1500:
             return "Le montant minimum de retrait est de 1500 XOF.", 400
-        if amount > user['balance']:
+        if net_amount > user['balance']:
             return "Solde insuffisant.", 400
-    except (ValueError, TypeError):
-        return "Montant invalide.", 400
 
-    # --- Débit provisoire du solde ---
-    user['balance'] -= amount
+        # --- Débit du solde ---
+        user['balance'] -= net_amount
 
-    # --- Enregistrement de la transaction ---
-    transaction_id = str(uuid.uuid4())
-    transaction = {
-        'id': transaction_id,
-        'amount': amount,
-        'method': method,
-        'address_or_number': address_or_number,
-        'status': 'En attente',
-        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
+        # --- Enregistrement de la transaction ---
+        transaction_id = str(uuid.uuid4())
+        transaction = {
+            'id': transaction_id,
+            'amount_brut': amount,
+            'frais': frais,
+            'amount_net': net_amount,
+            'method': method,
+            'address_or_number': address_or_number,
+            'status': 'En attente',
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
 
-    user.setdefault('transactions', []).append(transaction)
-    user.setdefault('mon_historique', []).append({
-        'date': transaction['timestamp'],
-        'description': f"Retrait {method}",
-        'montant': -amount,
-        'solde_apres': user['balance'],
-        'status': 'En attente'
-    })
+        # --- Historique ---
+        user.setdefault('transactions', []).append(transaction)
+        user.setdefault('mon_historique', []).append({
+            'date': transaction['timestamp'],
+            'description': f"Retrait {method}",
+            'montant': -net_amount,
+            'solde_apres': user['balance'],
+            'status': 'En attente'
+        })
 
-    users[user_email] = user
-    save_users_data(users)
+        users_data[user_email] = user
+        save_users_data(users_data)
 
-    return redirect(url_for('retrait_success',
-                            transaction_id=transaction_id,
-                            amount=amount,
-                            method=method,
-                            address_or_number=address_or_number))
+        return redirect(url_for('retrait_success',
+                                transaction_id=transaction_id,
+                                amount=net_amount,
+                                method=method,
+                                address_or_number=address_or_number))
+    except Exception as e:
+        return f"Erreur : {str(e)}", 500
 
 @app.route('/retrait_success')
 def retrait_success():
@@ -1052,39 +1044,6 @@ def retrait_success():
         address_or_number=address_or_number,
         timestamp=timestamp
     )
-@app.route('/modifier_portefeuille', methods=['GET', 'POST'])
-def modifier_portefeuille():
-    email = get_logged_in_user_email()
-    users_data = load_users_data()
-
-    if not email or email not in users_data:
-        return redirect(url_for('connexion'))
-
-    user = users_data[email]
-    methods = [
-        "Mobile Money Bénin", "Mobile Money Burkina Faso", "Mobile Money Cameroun",
-        "Mobile Money Sénégal", "Mobile Money Mali", "Mobile Money Gabon",
-        "Mobile Money Côte d'Ivoire", "Mobile Money Togo", "Mobile Money Ouganda",
-        "Mobile Money RD Congo", "Mobile Money Zambie", "Crypto BEP20"
-    ]
-
-    if request.method == 'POST':
-        wallet_country = request.form.get('wallet_country')
-        wallet_method = request.form.get('wallet_method')
-        wallet_number = request.form.get('wallet_number')
-
-        user['wallet_info'] = {
-            "country": wallet_country,
-            "method": wallet_method,
-            "number": wallet_number
-        }
-
-        users_data[email] = user
-        save_users_data(users_data)
-
-        return redirect(url_for('retrait_selection'))
-
-    return render_template('modifier_portefeuille.html', user=user, methods=methods)
 # ----------------------------
 # Admin: lister / valider / rejeter dépôts
 # (Important: ici il n'y a PAS d'auth admin; protège ces routes en prod)

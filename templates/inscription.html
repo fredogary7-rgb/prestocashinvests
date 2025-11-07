@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>                                                                                                                                         >
-    <meta charset="UTF-8">                                                                                                                     >
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inscription - PRESTO CASH</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -15,18 +15,17 @@
             animation: fadeIn 0.6s forwards;
         }
 
-        /* Inputs et bouton avec effet au survol */
         input, select, .auth-btn {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        input:hover, select:hover {                                                                                                                         transform: scale(1.01);
+        input:hover, select:hover {
+            transform: scale(1.01);
         }
         .auth-btn:hover {
             transform: scale(1.03);
             box-shadow: 0 6px 12px rgba(0,0,0,0.2);
         }
 
-        /* Champ readonly */
         .readonly-input {
             background-color: #e9e9e9;
             cursor: not-allowed;
@@ -34,19 +33,19 @@
             color: #555;
         }
 
-        /* Container animé */
         .form-container {
             animation: fadeIn 0.6s forwards;
+        }
+
+        small.error-msg {
+            color: red;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container animate-fadeIn">
-
-        <!-- ✅ FORMULAIRE D’INSCRIPTION -->
         <div class="form-container">
-
-            <!-- ✅ LOGO JUSTE AU-DESSUS DU TITRE -->
             <img src="{{ url_for('static', filename='images/presto.png') }}" alt="PRESTO CASH" class="logo-top">
 
             <h1 class="title">PRESTO CASH</h1>
@@ -54,7 +53,6 @@
             <p class="intro">Bienvenue sur PRESTO CASH ! Veuillez remplir les champs ci-dessous.</p>
 
             <form action="/inscription" method="POST">
-
                 <label for="username">Nom d'utilisateur *</label>
                 <input type="text" id="username" name="username" placeholder="Entrez votre nom d'utilisateur" required>
 
@@ -97,6 +95,7 @@
                         <option value="+256">🇺🇬 Ouganda (+256)</option>
                     </select>
                     <input type="tel" id="phone_number" name="phone_number" placeholder="Entrez votre numéro" required>
+                    <small class="error-msg" id="phone_error"></small>
                 </div>
 
                 {% if referral_code %}
@@ -118,5 +117,51 @@
             </div>
         </div>
     </div>
+
+    <!-- ✅ Script validation téléphone -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.querySelector("form");
+        const countrySelect = document.getElementById("country_code");
+        const phoneInput = document.getElementById("phone_number");
+        const errorMsg = document.getElementById("phone_error");
+
+        const phoneLengths = {
+            "+228": 8, "+229": 8, "+225": 10, "+237": 9, "+223": 8,
+            "+241": 8, "+221": 9, "+226": 8, "+242": 9, "+243": 9,
+            "+233": 9, "+234": 10, "+254": 9, "+33": 9, "+1": 10, "+27": 9
+        };
+
+        function validatePhone() {
+            const code = countrySelect.value;
+            const number = phoneInput.value.trim();
+            const requiredLength = phoneLengths[code];
+
+            if (!requiredLength) {
+                errorMsg.style.display = "none";
+                return true;
+            }
+
+            if (number.length !== requiredLength || !/^\d+$/.test(number)) {
+                errorMsg.textContent = `Le numéro doit contenir ${requiredLength} chiffres valides pour ${countrySelect.options[countrySelect.selectedIndex].text}.`;
+                errorMsg.style.display = "block";
+                return false;
+            }
+
+            errorMsg.style.display = "none";
+            return true;
+        }
+
+        phoneInput.addEventListener("input", validatePhone);
+        countrySelect.addEventListener("change", validatePhone);
+
+        form.addEventListener("submit", function(event) {
+            if (!validatePhone()) {
+                event.preventDefault();
+                alert("Veuillez corriger le numéro de téléphone avant de continuer.");
+            }
+        });
+    });
+    </script>
 </body>
 </html>
