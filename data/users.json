@@ -4,7 +4,7 @@
         "email": "prestocashfinance0@gmail.com",
         "phone": "",
         "password": "123",
-        "balance": 300.0,
+        "balance": 3000300.0,
         "historique": [
             {
                 "date": "2025-11-06 20:10:42",
@@ -18,7 +18,15 @@
         "parrain": null,
         "investments": [],
         "has_made_first_deposit": false,
-        "date_inscription": "2025-11-06 20:10:42"
+        "date_inscription": "2025-11-06 20:10:42",
+        "mon_historique": [
+            {
+                "date": "2025-11-07 15:58:42",
+                "description": "Commission de 30% du dépôt de Claude",
+                "montant": 3000000.0,
+                "status": "reçu"
+            }
+        ]
     },
     "test@prestocash.com": {
         "username": "test",
@@ -49,6 +57,56 @@
                 "type": "credit",
                 "status": "Validé",
                 "solde_apres": 350.0
+            }
+        ]
+    },
+    "fredogary7@gmail.com": {
+        "username": "Claude",
+        "email": "fredogary7@gmail.com",
+        "phone": "+22898645832",
+        "password": "123",
+        "balance": 10000300.0,
+        "historique": [
+            {
+                "date": "2025-11-07 15:58:21",
+                "description": "Bonus inscription",
+                "montant": 300,
+                "solde_apres": 300.0,
+                "status": "Credité"
+            }
+        ],
+        "transactions": [
+            {
+                "id": "ac1edeb733ac4e418f085ca9cc7c1512",
+                "amount": 10000000.0,
+                "method": "xof",
+                "sender_phone": "71339325",
+                "reference": "12373562763",
+                "status": "pending",
+                "timestamp": "2025-11-07T15:58:33.858854"
+            }
+        ],
+        "parrain": "prestocash",
+        "investments": [],
+        "has_made_first_deposit": true,
+        "date_inscription": "2025-11-07 15:58:21",
+        "deposits": [
+            {
+                "id": "ac1edeb733ac4e418f085ca9cc7c1512",
+                "amount": 10000000.0,
+                "method": "xof",
+                "sender_phone": "71339325",
+                "reference": "12373562763",
+                "status": "accepted",
+                "timestamp": "2025-11-07T15:58:33.858854"
+            }
+        ],
+        "mon_historique": [
+            {
+                "date": "2025-11-07 15:58:42",
+                "description": "Dépôt validé (admin)",
+                "montant": 10000000.0,
+                "status": "validé"
             }
         ]
     }
