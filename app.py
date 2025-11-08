@@ -376,17 +376,17 @@ def profile_page():
 PAYMENT_ACCOUNTS = {
     "xof": {
         "name": "3000 XOF",
-        "link": "https://app.payix.me/payment/c7584d8a-0390-493b-9225-8c6b5ac3d9c0",
+        "link": "https://app.payix.me/payment/25721a2a-a4b0-40d2-bf0d-d03aa615ce2a",
         "currency": "5 Pays"
     },
     "xaf": {
         "name": "5000 XOF",
-        "link": "https://app.payix.me/payment/908ab136-1c02-4090-9796-debb91d1ca37",
+        "link": "https://app.payix.me/payment/a9171154-6b0a-4ec3-8dcb-5fab471f7b63",
         "currency": "5 Pays"
     },
     "usdt": {
         "name": "10000 XOF",
-        "link": "https://app.payix.me/payment/d6195d97-c317-49d7-9f0e-890edb7d0d66",
+        "link": "https://app.payix.me/payment/2f5b56e7-377e-4a28-9f26-3f741a69e98d",
         "currency": "5 Pays"
     },
     "euro": {
