@@ -1,2 +1,17 @@
 firebase-key.json
 firebase-key.json
+# Environnement virtuel
+venv/
+
+# Fichiers Python compilés
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de données locale
+*.sqlite3
+instance/
+
+# Fichiers d'environnement
+.env
