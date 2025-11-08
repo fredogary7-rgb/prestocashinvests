@@ -1,44 +1,34 @@
-from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
-from datetime import datetime, timedelta
-import json, os, uuid, threading
-
-from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from datetime import datetime, timedelta
+import uuid
+import threading
+from flask import Flask
+from models import db, User, Deposit, Transaction, Withdrawal, Historique, Investissement  # adapte selon ton fichier# <- tu importes tout
+import os
 
-# ----------------------------
-# Configuration de l'application
-# ----------------------------
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__)
 app.secret_key = "ma_cle_ultra_secrete_2024_preto_cash"
-app.config['UPLOAD_FOLDER'] = 'static/proofs'
 
-# --- Configuration PostgreSQL Render ---
-DATABASE_URL = "postgresql+psycopg://presto_admin_user:j7C6is6xvR3EsV4dG6ph4Ju7NWUMurou@dpg-d45j4kf5r7bs73ajiq20-a.oregon-postgres.render.com/presto_admin"
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+DATABASE_URL = "postgresql+psycopg://neondb_owner:npg_P0EKkxdQ8Nit@..."
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg://neondb_owner:npg_P0EKkxdQ8Nit@ep-solitary-tooth-abfeect2-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# --- Initialisation SQLAlchemy ---
-db = SQLAlchemy(app)
-
-# ----------------------------
-# Fichiers JSON locaux (backup)
-# ----------------------------
+migrate = Migrate(app, db)
 DATA_DIR = "data"
-USERS_FILE = os.path.join(DATA_DIR, 'users.json')
-DEPOTS_FILE = os.path.join(DATA_DIR, 'depots_en_attente.json')
-RETRAITS_FILE = os.path.join(DATA_DIR, 'retraits_en_attente.json')
+UPLOAD_FOLDER = os.path.join(DATA_DIR, "uploads")
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+db.init_app(app)
 
 BONUS_PARRAINAGE = 50.0
 INITIAL_BALANCE = 0.0
 VIP_DURATION_DAYS = 60
 
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-# ----------------------------
-# Utilitaires JSON
-# ----------------------------
 def load_json(path):
     if not os.path.exists(path):
         return {}
@@ -54,96 +44,97 @@ def save_json(path, data):
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
-# ----------------------------
-# Modèle SQLAlchemy (Utilisateur)
-# ----------------------------
-class User(db.Model):
-    __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100))
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    phone = db.Column(db.String(20))
-    password = db.Column(db.String(200))
-    balance = db.Column(db.Float, default=0.0)
-    parrain = db.Column(db.String(120), nullable=True)
-    withdraw_number = db.Column(db.String(50))
-    date_inscription = db.Column(db.String(50))
-    has_made_first_deposit = db.Column(db.Boolean, default=False)
-
-    def to_dict(self):
-        """Convertit l'objet User en dictionnaire (utile pour compatibilité JSON)."""
-        return {
-            "username": self.username,
-            "email": self.email,
-            "phone": self.phone,
-            "password": self.password,
-            "balance": self.balance,
-            "parrain": self.parrain,
-            "withdraw_number": self.withdraw_number,
-            "date_inscription": self.date_inscription,
-            "has_made_first_deposit": self.has_made_first_deposit,
-        }
-
-# ----------------------------
-# Helpers pour compatibilité JSON
-# ----------------------------
 def load_users_data():
-    return load_json(USERS_FILE)
+    """Charge les utilisateurs depuis PostgreSQL (compatibilité avec le code existant)."""
+    users_dict = {}
+    all_users = User.query.all()
+    for u in all_users:
+        users_dict[u.email] = u.to_dict()
+    return users_dict
 
 def save_users_data(data):
-    save_json(USERS_FILE, data)
+    """Sauvegarde les données utilisateurs dans PostgreSQL."""
+    from app import db, app
+    from models import User
+
+    with app.app_context():
+        for email, user_data in data.items():
+            # Vérifie si l'utilisateur existe déjà
+            user = User.query.filter_by(email=email).first()
+            if user:
+                # Mise à jour des champs existants
+                user.username = user_data.get("username", user.username)
+                user.phone = user_data.get("phone", user.phone)
+                user.password = user_data.get("password", user.password)  # Assurez-vous que le mot de passe est hashé
+                user.balance = user_data.get("balance", user.balance)
+                user.parrain = user_data.get("parrain", user.parrain)
+                user.withdraw_number = user_data.get("withdraw_number", user.withdraw_number)
+                user.date_inscription = user_data.get("date_inscription", user.date_inscription)
+                user.has_made_first_deposit = user_data.get(
+                    "has_made_first_deposit", getattr(user, "has_made_first_deposit", False)
+                )
+                user.last_bonus_date = user_data.get(
+                    "last_bonus_date", getattr(user, "last_bonus_date", None)
+                )
+            else:
+                # Création d'un nouvel utilisateur
+                user = User(
+                    username=user_data.get("username"),
+                    email=email,
+                    phone=user_data.get("phone"),
+                    password=user_data.get("password"),  # Assurez-vous que le mot de passe est hashé
+                    balance=user_data.get("balance", 0.0),
+                    parrain=user_data.get("parrain"),
+                    withdraw_number=user_data.get("withdraw_number"),
+                    date_inscription=user_data.get("date_inscription"),
+                    has_made_first_deposit=user_data.get("has_made_first_deposit", False),
+                    last_bonus_date=user_data.get("last_bonus_date")
+                )
+                db.session.add(user)
+
+        # Commit après avoir traité tous les utilisateurs
+        db.session.commit()
+
+from app import db, User, Transaction
 
 def ensure_user_exists(email):
-    """Assure qu'un utilisateur existe (JSON local)."""
+    """Créer un utilisateur dans PostgreSQL si inexistant."""
     email = email.strip().lower()
-    users_data = load_users_data()
-    if email not in users_data:
-        users_data[email] = {
-            "username": "",
-            "email": email,
-            "phone": "",
-            "password": "",
-            "balance": INITIAL_BALANCE,
-            "historique": [],
-            "transactions": [],
-            "parrain": None,
-            "investments": [],
-            "has_made_first_deposit": False,
-            "date_inscription": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "withdraw_number": ""
-        }
-        save_users_data(users_data)
-    return users_data[email], users_data
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(
+            username="",
+            email=email,
+            balance=0.0,  # ou INITIAL_BALANCE si défini
+            date_inscription=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            has_made_first_deposit=False
+        )
+        db.session.add(user)
+        db.session.commit()
+    return user
 
-def add_history_entry(user_email, description, montant, status, users_data=None):
-    """Ajoute une entrée d'historique (JSON)."""
-    if users_data is None:
-        users_data = load_users_data()
 
-    if user_email not in users_data:
+def add_history_entry(user_email, description, montant, status):
+    """Ajoute une transaction PostgreSQL pour un utilisateur."""
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
         return
 
-    user = users_data[user_email]
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    entry = {
-        'date': timestamp,
-        'description': description,
-        'montant': montant,
-        'solde_apres': user.get('balance', 0.0),
-        'status': status
-    }
-
-    user.setdefault('historique', []).append(entry)
-    users_data[user_email] = user
-    save_users_data(users_data)
+    txn = Transaction(
+        id=uuid.uuid4().hex,  # ✅ génère un ID unique pour éviter le NULL
+        user_email=user_email,
+        type=description,
+        amount=montant,
+        status=status,
+        date=datetime.now()
+    )
+    db.session.add(txn)
+    db.session.commit()
 
 def get_logged_in_user_email():
+    """Récupère l'email de l'utilisateur connecté depuis la session."""
     return session.get('email')
-
-# ----------------------------
-# Initialisation et migration
-# ----------------------------
 def init_db():
     """Créer les tables PostgreSQL"""
     with app.app_context():
@@ -178,6 +169,13 @@ def migrate_users_from_json():
                     print(f"⚠️  Doublon ignoré : {email}")
         print("🎉 Migration terminée.")
 
+class Referral(db.Model):
+    __tablename__ = 'referrals'
+
+    id = db.Column(db.Integer, primary_key=True)
+    parrain_email = db.Column(db.String(120), db.ForeignKey('users.email'))
+    filleul_email = db.Column(db.String(120), db.ForeignKey('users.email'))
+    date = db.Column(db.String(30))  # tu peux aussi mettre DateTime si tu veux
 # Connexion MongoDB
 # ----------------------------
 # Routes d'inscription / connexion
@@ -248,19 +246,21 @@ def inscription_page():
     # ✅ Correction de la dernière ligne : variable mal orthographiée
     return render_template('inscription.html', message=message, referral_code=referral_code)
 
+
 @app.route('/connexion', methods=['GET', 'POST'])
 def connexion():
     message = None
-    users_data = load_users_data()
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password')
 
-        if email in users_data:
-            user = users_data[email]
-            if user.get('password') == password:
-                session['email'] = email  # <-- clé cohérente avec le reste du code
+        # Recherche l'utilisateur dans PostgreSQL
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            if user.password == password:  # <-- ici tu compares directement
+                session['email'] = user.email  # clé cohérente
                 flash("Connexion réussie !", "success")
                 return redirect(url_for('dashboard_page'))
             else:
@@ -269,7 +269,6 @@ def connexion():
             message = {"type": "error", "text": "Aucun compte trouvé avec cet email."}
 
     return render_template('connexion.html', message=message)
-
 
 @app.route('/logout')
 def logout():
@@ -283,25 +282,37 @@ def logout():
 # ----------------------------
 @app.route('/dashboard')
 def dashboard_page():
-    users_data = load_users_data()
     user_email = get_logged_in_user_email()
-
-    if not user_email or user_email not in users_data:
+    if not user_email:
         flash("Veuillez vous connecter.", "warning")
         return redirect(url_for('connexion'))
 
-    user = users_data[user_email]
-    # Normalisation pour templates
+    # Récupération de l'utilisateur depuis PostgreSQL
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        flash("Utilisateur introuvable.", "error")
+        return redirect(url_for('connexion'))
+
+    # Historique et transactions
+    historique = Transaction.query.filter_by(user_email=user_email).order_by(Transaction.date.desc()).all()
+    historique_list = [{
+        "date": t.date.strftime("%d-%m-%Y %H:%M:%S"),
+        "description": t.description or t.type,
+        "montant": t.amount,
+        "status": t.status
+    } for t in historique]
+
+    # Préparation des données pour le template
     user_display = {
-        'username': user.get('username', user_email.split('@')[0]),
-        'email': user.get('email', user_email),
-        'phone': user.get('phone', ''),
-        'balance': round(user.get('balance', 0.0), 2),
-        'historique': user.get('mon_historique', []),
-        'transactions': user.get('transactions', []),
-        'parrain': user.get('parrain'),
-        'filleuls': user.get('filleuls', []),
-        'investments': user.get('investments', [])
+        'username': user.username or user_email.split('@')[0],
+        'email': user.email,
+        'phone': user.phone or '',
+        'balance': round(user.balance or 0.0, 2),
+        'historique': historique_list,
+        'transactions': historique_list,
+        'parrain': user.parrain,
+        'investments': [i.to_dict() for i in user.investments] if hasattr(user, 'investments') else [],
+        'filleuls': [f.to_dict() for f in user.filleuls] if hasattr(user, 'filleuls') else []
     }
 
     message = None
@@ -317,11 +328,9 @@ def dashboard_page():
 @app.route('/profile')
 def profile_page():
     user_email = get_logged_in_user_email()
-    users_data = load_users_data()
+    user = User.query.filter_by(email=user_email).first() if user_email else None
 
-    user_info = users_data.get(user_email) if user_email else None
-
-    if not user_info:
+    if not user:
         # invité
         guest = {
             'username': 'Invité',
@@ -339,19 +348,28 @@ def profile_page():
                                user_solde=guest['balance'],
                                date_joined=guest['date_inscription'],
                                parrain='Aucun',
-                               historique=guest['mon_historique'],
+                               historique=guest['historique'],
                                transactions=guest['transactions'])
-    # utilisateur connecté
+
+    # Historique depuis PostgreSQL
+    historique = Transaction.query.filter_by(user_email=user_email).order_by(Transaction.date.desc()).all()
+    historique_list = [{
+        "date": t.date.strftime("%d-%m-%Y %H:%M:%S"),
+        "description": t.description or t.type,
+        "montant": t.amount,
+        "status": t.status
+    } for t in historique]
+
     return render_template(
         'profile.html',
-        user_name=user_info.get('username'),
-        user_email=user_info.get('email'),
-        user_phone=user_info.get('phone'),
-        user_solde=round(user_info.get('balance', 0.0), 2),
-        date_joined=user_info.get('date_inscription'),
-        parrain=user_info.get('parrain'),
-        historique=user_info.get('mon_historique', []),
-        transactions=user_info.get('transactions', [])
+        user_name=user.username,
+        user_email=user.email,
+        user_phone=user.phone,
+        user_solde=round(user.balance, 2),
+        date_joined=user.date_inscription,
+        parrain=user.parrain or 'Aucun',
+        historique=historique_list,
+        transactions=historique_list
     )
 
 
@@ -385,8 +403,10 @@ PAYMENT_ACCOUNTS = {
 # ----------------------------
 # Dépôt : sélection / soumission / preuve
 # ----------------------------
+
 @app.route('/deposit')
-def deposit_selection_page():                                                                             return render_template('deposit.html', payment_methods=PAYMENT_ACCOUNTS)
+def deposit_selection_page():
+    return render_template('deposit.html', payment_methods=PAYMENT_ACCOUNTS)
 
 @app.route('/deposit/<method>')
 def deposit_page(method):
@@ -426,6 +446,7 @@ def deposit_instructions():
     context = request.args
     return render_template('deposit_instructions.html', **context)
 
+
 @app.route('/api/submit_proof', methods=['POST'])
 def submit_proof():
     transaction_id = uuid.uuid4().hex
@@ -434,35 +455,56 @@ def submit_proof():
     sender_phone = request.form.get('sender_phone')
     reference_text = request.form.get('reference_text')
 
-    if not amount or not method or not reference_text:
+    if not amount or not method:
         return "Erreur: Données de transaction incomplètes.", 400
 
     user_email = get_logged_in_user_email()
     if not user_email:
         return "Erreur : Utilisateur non connecté.", 401
 
-    users = load_users_data()
+    # --- Récupérer l'utilisateur depuis PostgreSQL ---
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return "Utilisateur introuvable.", 404
 
-    transaction_data = {
-        'id': transaction_id,
-        'amount': float(amount),
-        'method': method,
-        'sender_phone': sender_phone,
-        'reference': reference_text,
-        'status': 'pending',  # ⚡ statut pour l'admin
-        'timestamp': datetime.today().isoformat()
-    }
+    # --- Générer une référence unique si non fournie ou déjà existante ---
+    from sqlalchemy.exc import IntegrityError
+    if not reference_text:
+        reference_text = str(uuid.uuid4().int)[:12]
 
-    if user_email in users:
-        user = users[user_email]
-        # Ajout dans transactions existantes
-        user.setdefault('transactions', []).append(transaction_data)
-        # ⚡ Ajout dans deposits pour l'admin
-        user.setdefault('deposits', []).append(transaction_data)
-        if not user.get('phone') and sender_phone:
-            user['phone'] = sender_phone
-        users[user_email] = user
-        save_users_data(users)
+    attempt = 0
+    while True:
+        if attempt > 5:
+            return "Impossible de générer une référence unique. Réessayez plus tard.", 500
+        if Transaction.query.filter_by(reference=reference_text).first():
+            reference_text = str(uuid.uuid4().int)[:12]  # nouvelle référence
+            attempt += 1
+        else:
+            break
+
+    # --- Créer l'objet transaction ---
+    txn = Transaction(
+        id=transaction_id,
+        user_email=user_email,
+        type=f"Dépôt via {method}",
+        amount=float(amount),
+        status='pending',
+        reference=reference_text,
+        date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        sender_phone=sender_phone
+    )
+
+    db.session.add(txn)
+
+    # --- Mettre à jour le numéro de téléphone si vide ---
+    if not user.phone and sender_phone:
+        user.phone = sender_phone
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return "Erreur: Impossible d'enregistrer la transaction (référence dupliquée).", 500
 
     return redirect(url_for('deposit_success', transaction_id=transaction_id))
 
@@ -474,7 +516,6 @@ def deposit_success():
 @app.route('/reglement')
 def reglement_page():
     return render_template('reglement.html')
-
 
 
     # Chargement des produits VIP
@@ -542,116 +583,153 @@ PRODUITS_VIP = {
 
 @app.route('/decouvrir')
 def decouvrir_page():
+    """
+    Page Découvrir - accessible uniquement si l'utilisateur a investi >= 3000 dans un produit de 60 jours.
+    Utilise le modèle Investissement pour vérifier l'éligibilité.
+    """
     user_email = get_logged_in_user_email()
-    all_users_data = load_users_data()
+    if not user_email:
+        return render_template('decouvrir_bloque.html', user_info={'username': 'Invité', 'balance': 0.0, 'historique': []})
 
-    user_info = None
-    if user_email:
-        user_info = all_users_data.get(user_email)
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return render_template('decouvrir_bloque.html', user_info={'username': 'Invité', 'balance': 0.0, 'historique': []})
 
-    if user_info is None:
-        user_info = {'username': 'Invité', 'balance': 0.0, 'historique': []}
+    # Récupère tous les investissements de cet utilisateur
+    investissements = Investissement.query.filter_by(user_email=user.email).all()
+    
+    # Transforme les investissements en dictionnaire pour l'affichage et l'analyse
+    historique = [h.to_dict() for h in Historique.query.filter_by(user_id=user.id).all()]
+    investissements_dict = []
+    eligible_vip = False
 
-    # Vérifie s’il est éligible : investissement >= 3000 sur un produit de 60 jours
-    historique = user_info.get('historique', [])  # <-- ici !
-    eligible_vip = any(
-        float(h.get('montant', 0)) >= 3000 and "60" in h.get('nom', '').lower() and "jour" in h.get('nom', '').lower()
-        for h in historique
-    )
+    now = datetime.now()
+    for inv in investissements:
+        # Mettre à jour le statut si terminé
+        date_fin = inv.date_debut + timedelta(days=inv.duree_jours)
+        if now >= date_fin and inv.status != 'Terminé':
+            inv.status = 'Terminé'
+            db.session.commit()
+
+        # Vérifie l'éligibilité pour le produit Découvrir
+        if inv.montant >= 3000 and inv.duree_jours == 60:
+            eligible_vip = True
+
+        investissements_dict.append({
+            'nom': inv.nom,
+            'montant': inv.montant,
+            'date_debut': inv.date_debut.strftime("%Y-%m-%d"),
+            'duree_jours': inv.duree_jours,
+            'revenu_quotidien': inv.revenu_quotidien,
+            'rendement_total': inv.rendement_total,
+            'status': inv.status
+        })
+
+    user_info = {
+        'username': user.username,
+        'email': user.email,
+        'balance': user.balance,
+        'historique': historique,
+        'investissements': investissements_dict
+    }
 
     if not eligible_vip:
+        # Bloque l'accès si l'utilisateur n'a pas investi un plan de 60 jours >= 3000
         return render_template('decouvrir_bloque.html', user_info=user_info)
 
-    # Trace des produits VIP consultés
-    user_info['produits_vip_consultes'] = list(PRODUITS_VIP.keys())
-
-    if user_email:
-        all_users_data[user_email] = user_info
-        save_users_data(all_users_data)
+    # Produits VIP disponibles
+    produits_vip = list(PRODUITS_VIP.values()) if isinstance(PRODUITS_VIP, dict) else []
 
     return render_template(
         'decouvrir.html',
-        products=list(PRODUITS_VIP.values()),
+        products=produits_vip,
         user_info=user_info
     )
 
 @app.route('/investir/<product_id>', methods=['GET', 'POST'])
 def investir(product_id):
-    """Permet à un utilisateur d'investir dans un produit Découvrir (VIP)."""
+    """Permet à un utilisateur d'investir dans un produit Découvrir (VIP) avec historique persistant."""
     user_email = get_logged_in_user_email()
     if not user_email:
         return redirect(url_for('connexion'))
 
-    all_users_data = load_users_data()
-    user_data = all_users_data.get(user_email)
+    user = User.query.filter_by(email=user_email).first()
     product = PRODUITS_VIP.get(product_id)
 
-    if not product:
-        return redirect(url_for('decouvrir_page'))
-
-    if not user_data:
-        flash("Utilisateur introuvable.", "danger")
+    if not product or not user:
+        flash("Produit ou utilisateur introuvable.", "danger")
         return redirect(url_for('decouvrir_page'))
 
     if request.method == 'POST':
-        current_balance = float(user_data.get('balance', 0.0))
-        investment_amount = float(product['montant_min'])
+        try:
+            investment_amount = float(product['montant_min'])
+        except (TypeError, ValueError):
+            flash("Montant du produit invalide.", "danger")
+            return redirect(url_for('decouvrir_page'))
 
+        current_balance = user.balance or 0.0
         if current_balance < investment_amount:
             return render_template(
                 'investir.html',
                 product=product,
                 message="⚠️ Solde insuffisant pour cet investissement.",
-                user_info=user_data
+                user_info=user
             )
 
-        # --- Débiter le solde ---
-        user_data['balance'] = round(current_balance - investment_amount, 2)
+        # --- Débiter le solde utilisateur ---
+        user.balance = round(current_balance - investment_amount, 2)
+
+        # --- Crée un investissement VIP dans la table Investissement ---
+        new_invest = Investissement(
+            user_email=user.email,
+            nom=product['nom'],
+            montant=investment_amount,
+            date_debut=datetime.utcnow(),
+            duree_jours=product.get('duree_jours', 21),
+            revenu_quotidien=product.get('gain_quotidien', 0),
+            rendement_total=product.get('rendement_total', investment_amount),
+            status="En cours"
+        )
+        db.session.add(new_invest)
 
         # --- Historique de l’investissement ---
-        add_history_entry(
-            user_email,
-            f"Investissement VIP: {product['nom']}",
-            -investment_amount,
-            'En cours'
+        hist_entry = Historique(
+            user_id=user.id,
+            date=datetime.utcnow(),
+            description=f"Investissement VIP: {product['nom']}",
+            montant=-investment_amount,
+            type='debit',
+            status='En cours',
+            solde_apres=user.balance
         )
-
-        # ✅ NOUVEAU : Enregistrement de la date et heure d’investissement
-        user_data.setdefault('investissements_vip', [])
-        investissement = {
-            "produit_id": product_id,
-            "nom": product['nom'],
-            "montant": investment_amount,
-            "date_investissement": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "duree_jours": product.get('duree_jours', 21),
-            "statut": "en cours"
-        }
-        user_data['investissements_vip'].append(investissement)
+        db.session.add(hist_entry)
 
         # --- Commission du parrain ---
-        parrain_email = user_data.get('parrain') or user_data.get('parrain_id')
-        if parrain_email and parrain_email in all_users_data:
-            commission = round(investment_amount * 0.30, 2)
-            parrain_data = all_users_data[parrain_email]
-            parrain_data['balance'] = round(parrain_data.get('balance', 0.0) + commission, 2)
+        if user.parrain:
+            parrain = User.query.filter_by(email=user.parrain).first()
+            if parrain:
+                commission = round(investment_amount * 0.30, 2)
+                parrain.balance = (parrain.balance or 0.0) + commission
 
-            add_history_entry(
-                parrain_email,
-                f"Commission de parrainage (30%) sur investissement de {user_data.get('username', user_email)}",
-                commission,
-                'Validé'
-            )
-         # --- Enregistre aussi dans la liste des investissements VIP ---
+                # Historique commission parrain
+                hist_parrain = Historique(
+                    user_id=parrain.id,
+                    date=datetime.utcnow(),
+                    description=f"Commission de parrainage (30%) sur investissement de {user.username}",
+                    montant=commission,
+                    type='credit',
+                    status='Validé',
+                    solde_apres=parrain.balance
+                )
+                db.session.add(hist_parrain)
 
-
-        # ✅ Sauvegarde finale
-        all_users_data[user_email] = user_data
-        save_users_data(all_users_data)
+        db.session.commit()
 
         message = f"✅ Félicitations ! Vous avez investi {investment_amount:,.0f} XOF dans {product['nom']}."
-        return render_template('investir.html', product=product, message=message, user_info=user_data)
+        return render_template('investir.html', product=product, message=message, user_info=user)
 
-    return render_template('investir.html', product=product, message=None, user_info=user_data)
+    return render_template('investir.html', product=product, message=None, user_info=user)
+
 # --- Produits rapides ---
 VIP_PRODUITS = {
     'VIP3K': {
@@ -716,89 +794,77 @@ VIP_PRODUITS = {
     }
 }
 
+
+
+# --- Gestion des produits VIP et Rapides ---
 @app.route('/produits_rapide')
 def produits_rapide_page():
-    """Affiche les produits rapides (3 jours) et crédite les revenus quotidiens des investissements."""
-
     user_email = get_logged_in_user_email()
-    all_users_data = load_users_data()
-
-    # 🔒 Vérifie si l'utilisateur est connecté
-    if not user_email or user_email not in all_users_data:
+    if not user_email:
         flash("Veuillez vous connecter pour accéder aux produits rapides.", "error")
         return redirect(url_for('connexion'))
 
-    user_info = all_users_data[user_email]
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        flash("Utilisateur introuvable.", "error")
+        return redirect(url_for('connexion'))
 
-    # ===== Crédit automatique des revenus quotidiens =====
     now = datetime.now()
     updated = False
 
-    for investment in user_info.get('investissements_vip', []):
-        date_debut = datetime.strptime(investment['date_debut'], "%Y-%m-%d %H:%M:%S")
-        duree_jours = investment.get('duree_jours', 0)
+    # Gestion des investissements en mémoire (VIP ou Rapide)
+    if not hasattr(user, "investissements_vip") or user.investissements_vip is None:
+        user.investissements_vip = []
+
+    for investment in user.investissements_vip:
+        date_debut = datetime.strptime(investment.get('date_debut', now.strftime("%Y-%m-%d %H:%M:%S")),
+                                       "%Y-%m-%d %H:%M:%S")
+        duree_jours = int(investment.get('duree_jours', 0))
         date_fin = date_debut + timedelta(days=duree_jours)
 
-        if now >= date_fin:
-            # Marque comme terminé si le cycle est écoulé
-            if investment['status'] != 'Terminé':
-                investment['status'] = 'Terminé'
-                updated = True
-            continue
+        if now >= date_fin and investment.get('status') != 'Terminé':
+            investment['status'] = 'Terminé'
+            updated = True
 
-        last_credit_str = investment.get('last_credit', investment['date_debut'])
+        # Revenus quotidiens
+        last_credit_str = investment.get('last_credit', investment.get('date_debut', now.strftime("%Y-%m-%d %H:%M:%S")))
         last_credit = datetime.strptime(last_credit_str, "%Y-%m-%d %H:%M:%S")
         days_passed = (now.date() - last_credit.date()).days
 
         if days_passed > 0:
-            revenu_quotidien = investment.get('revenu_quotidien', 0)
+            revenu_quotidien = float(investment.get('revenu_quotidien', 0))
             total_gain = revenu_quotidien * days_passed
+            user.balance = round((user.balance or 0) + total_gain, 2)
 
-            # ⚡️ Ajoute les gains au solde
-            user_info['balance'] = round(user_info.get('balance', 0.0) + total_gain, 2)
-
-            # Historique des gains
-            user_info.setdefault('mon_historique', []).append({
-                'date': now.strftime("%Y-%m-%d %H:%M:%S"),
-                'description': f"Revenus quotidiens {investment['nom']} ({days_passed} jours)",
-                'montant': total_gain,
-                'solde_apres': user_info['balance'],
-                'status': 'Credité'
-            })
-
-            # Met à jour la date du dernier crédit
+            hist_entry = Historique(
+                user_id=user.id,
+                date=now,
+                description=f"Revenus quotidiens {investment.get('nom', 'VIP')} ({days_passed} jours)",
+                montant=total_gain,
+                type='credit',
+                status='Credité',
+                solde_apres=user.balance
+            )
+            db.session.add(hist_entry)
             investment['last_credit'] = now.strftime("%Y-%m-%d %H:%M:%S")
             updated = True
 
-    # Sauvegarde si des gains ont été ajoutés
     if updated:
-        all_users_data[user_email] = user_info
-        save_users_data(all_users_data)
+        db.session.commit()
 
-    # 🧾 Calcul du total des dépôts confirmés
+    # Vérification seuil pour accéder aux produits rapides
     total_depots = sum(
-        float(dep.get('amount', 0))
-        for dep in user_info.get('deposits', [])
-        if str(dep.get('status', '')).lower() in ['accepté', 'accepted', 'validé']
-    )
-    total_depots += sum(
-        float(h.get('montant', 0))
-        for h in user_info.get('mon_historique', [])
-        if 'dépôt' in str(h.get('description', '')).lower() and float(h.get('montant', 0)) > 0
+        t.amount for t in Transaction.query.filter_by(user_email=user.email).all()
+        if str(t.status).lower() in ['accepté', 'accepted', 'validé']
     )
 
-    # 🚫 Vérifie si le total des dépôts atteint 15 000 XOF
     if total_depots < 15000:
         flash("⚠️ Vous devez avoir au moins 15 000 XOF de dépôts cumulés pour accéder aux produits rapides.", "warning")
-        return render_template('produits_bloque.html', user_info=user_info, total_depots=total_depots)
+        return render_template('produits_bloque.html', user_info=user, total_depots=total_depots)
 
-    # ✅ Sécurité : VIP_PRODUITS doit être un dict
-    if not isinstance(VIP_PRODUITS, dict):
-        flash("Erreur interne : les produits rapides ne sont pas correctement configurés.", "error")
-        return render_template('produits_bloque.html', user_info=user_info)
+    produits_rapide = list(VIP_PRODUITS.values()) if isinstance(VIP_PRODUITS, dict) else []
+    return render_template('produits_rapide.html', user_info=user, produits=produits_rapide)
 
-    produits_rapide = list(VIP_PRODUITS.values())
-    return render_template('produits_rapide.html', user_info=user_info, produits=produits_rapide)
 
 @app.route('/investir_rapide/<product_id>', methods=['GET', 'POST'])
 def investir_rapide(product_id):
@@ -807,41 +873,27 @@ def investir_rapide(product_id):
         flash("Veuillez vous connecter pour investir.", "error")
         return redirect(url_for('connexion'))
 
-    users = load_users_data()
-    user = users.get(user_email)
-
+    user = User.query.filter_by(email=user_email).first()
     product = VIP_PRODUITS.get(product_id) if isinstance(VIP_PRODUITS, dict) else None
 
-    if not product or not user:
+    if not user or not product:
         flash("Produit ou utilisateur introuvable.", "error")
         return redirect(url_for('produits_rapide_page'))
 
-    # Vérifie nombre d'investissements
-    existing_investments = [
-        i for i in user.get('investissements_vip', []) if i.get('id') == product_id
-    ]
-    if len(existing_investments) >= 2:
-        flash("❌ Vous avez déjà investi 2 fois dans ce produit.", "warning")
-        return redirect(url_for('produits_rapide_page'))
-
-    # GET : Affiche la page de confirmation
     if request.method == 'GET':
         return render_template('investir_confirm.html', product=product, user_info=user)
 
-    # POST : Effectue l'investissement
-    try:
-        amount = float(product.get('montant_min', 0))
-    except (TypeError, ValueError):
-        flash("Montant du produit invalide.", "error")
-        return redirect(url_for('produits_rapide_page'))
-
-    balance = float(user.get('balance', 0.0))
-    if balance < amount:
+    amount = float(product.get('montant_min', 0))
+    if (user.balance or 0.0) < amount:
         flash("⚠️ Solde insuffisant pour cet investissement.", "danger")
         return redirect(url_for('produits_rapide_page'))
 
-    user['balance'] = round(balance - amount, 2)
-    investment_entry = {
+    user.balance = round(user.balance - amount, 2)
+
+    if not hasattr(user, "investissements_vip") or user.investissements_vip is None:
+        user.investissements_vip = []
+
+    user.investissements_vip.append({
         'id': product_id,
         'nom': product.get('nom', 'Produit rapide'),
         'montant': amount,
@@ -850,191 +902,218 @@ def investir_rapide(product_id):
         'duree_jours': product.get('duree_jours', 3),
         'date_debut': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'status': 'En cours'
-    }
+    })
 
-    user.setdefault('investissements_vip', []).append(investment_entry)
     add_history_entry(user_email, f"Investissement rapide : {product.get('nom')}", -amount, 'En cours')
-    users[user_email] = user
-    save_users_data(users)
+    db.session.commit()
 
     flash(f"✅ Vous avez investi {amount:,.0f} XOF dans {product.get('nom')}.", "success")
     return redirect(url_for('produits_rapide_page'))
-
-# ----------------------------
-# Retrait : sélection / soumission
 # ----------------------------
 @app.route('/mes_commandes')
 def mes_commandes_page():
-    """Affiche tous les investissements de l'utilisateur (VIP et normaux) de manière sécurisée."""
-
     user_email = get_logged_in_user_email()
-    users = load_users_data()
+    if not user_email:
+        flash("Veuillez vous connecter.", "error")
+        return redirect(url_for('connexion'))
 
-    # Vérifie connexion
-    if not user_email or user_email not in users:
-        return render_template('mes_commandes.html', commandes=[])
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        flash("Utilisateur introuvable.", "error")
+        return redirect(url_for('connexion'))
 
-    user = users[user_email]
+    commandes = Investissement.query.filter_by(user_email=user.email).all()
 
-    # Récupère tous les investissements valides (dictionnaires) depuis les deux listes
-    commandes_vip = [i for i in user.get('investissements_vip', []) if isinstance(i, dict)]
-    commandes_normales = [i for i in user.get('investments', []) if isinstance(i, dict)]
-
-    # Fusionne les deux listes
-    commandes = commandes_vip + commandes_normales
-
-    # Standardise les champs pour éviter les valeurs manquantes
-    for c in commandes:
-        # Montant investi
-        montant = c.get('montant') or c.get('amount') or 0
-        c['montant'] = float(montant) if montant is not None else 0
-
-        # Revenu quotidien
-        revenu = c.get('revenu_quotidien') or c.get('daily_income') or 0
-        c['revenu_quotidien'] = float(revenu) if revenu is not None else 0
-
-        # Rendement total
-        rendement = c.get('rendement_total') or c.get('total_return') or 0
-        c['rendement_total'] = float(rendement) if rendement is not None else 0
-
-        # Date de début
-        c['date_debut'] = c.get('date_debut') or c.get('date_investissement') or "Non défini"
-
-        # Durée en jours
-        duree = c.get('duree_jours') or c.get('days') or 0
-        c['duree_jours'] = int(duree) if duree is not None else 0
-
-        # Statut
-        c['statut'] = c.get('statut') or c.get('status') or "En cours"
-
-    return render_template('mes_commandes.html', commandes=commandes, user_info=user)
+    return render_template('mes_commandes.html', user=user, commandes=commandes)
 
 @app.route('/retrait', methods=['GET', 'POST'])
 def retrait_selection():
     email = get_logged_in_user_email()
-    users_data = load_users_data()
-
-    if not email or email not in users_data:
+    if not email:
         return redirect(url_for('connexion'))
 
-    user = users_data[email]
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return redirect(url_for('connexion'))
 
-    # --- Calculs du solde retirable ---
-    total_deposits = sum(d['amount'] for d in user.get('deposits', []))
-    total_investments = sum(d['montant'] for d in user.get('historique', []) if "plan_60_jours" in d.get('nom', '').lower())
-    remaining_non_withdrawable = max(total_deposits - total_investments, 0)
-    total_balance = user.get('balance', 0.0)
-    withdrawable_balance = max(total_balance - remaining_non_withdrawable, 0.0)
+    # --- Calcul du solde total des dépôts acceptés ---
+    transactions = Transaction.query.filter_by(user_email=email).all()
+    total_deposits = sum(
+        t.amount for t in transactions
+        if str(t.status).lower() in ['accepté', 'accepted', 'validé']
+    )
 
-    # --- Moyens de retrait disponibles ---
+    # --- Total des investissements actifs ---
+    investissements = getattr(user, 'investissements_vip', []) or []
+    total_investments = sum(
+        i.get('montant', 0) for i in investissements
+        if i.get('status') in ['En cours', 'Active', 'active']
+    )
+
+    # --- Solde non retirables = dépôts non investis ---
+    non_withdrawable = max(total_deposits - total_investments, 0)
+
+    # --- Solde disponible pour retrait ---
+    total_balance = getattr(user, 'balance', 0.0)
+    withdrawable_balance = max(total_balance - non_withdrawable, 0.0)
+
     methods = [
         "Moov Money", "MTN", "Mix by YAS", "Orange Money",
         "Airtel", "Vodacom", "Crypto BEP20"
     ]
 
-    # Étape 1 : affichage ou validation partielle (confirmation)
     if request.method == 'POST':
         try:
-            amount = float(request.form.get('amount'))
+            amount = float(request.form.get('amount', 0))
             method = request.form.get('method')
 
             if amount < 1500:
-                return "Le montant minimum de retrait est de 1500 XOF.", 400
-            if amount > withdrawable_balance:
-                return "Solde disponible pour retrait insuffisant.", 400
+                flash("Le montant minimum de retrait est de 1500 XOF.", "warning")
+                return redirect(url_for('retrait_selection'))
 
-            # --- Calcul du frais de 10 % ---
+            if amount > withdrawable_balance:
+                flash("⚠️ Solde disponible pour retrait insuffisant.", "danger")
+                return redirect(url_for('retrait_selection'))
+
+            # Calcul frais 10%
             frais = round(amount * 0.10, 2)
             net_amount = round(amount - frais, 2)
 
-            # --- Page de confirmation ---
+            # --- Déduire le montant total du solde utilisateur ---
+            user.balance = round(user.balance - amount, 2)
+
+            # --- Ajouter au Historique le montant net (après frais) ---
+            hist_entry = Historique(
+                user_id=user.id,
+                date=datetime.utcnow(),
+                description=f"Retrait via {method}",
+                montant=-net_amount,  # négatif car c'est une sortie
+                type='debit',
+                status='En cours',
+                solde_apres=user.balance
+            )
+            db.session.add(hist_entry)
+
+            # --- Ajouter dans Withdrawal pour admin ---
+            withdrawal_entry = Withdrawal(
+                id=str(uuid.uuid4()),
+                user_email=user.email,
+                amount=amount,  # montant total demandé par l'utilisateur
+                method=method,
+                receiver=getattr(user, 'phone', ''),
+                status='En attente',
+                timestamp=datetime.utcnow()
+            )
+            db.session.add(withdrawal_entry)
+
+            # --- Commit final ---
+            db.session.commit()
+
             return render_template(
                 'confirmer_retrait.html',
                 amount=amount,
                 frais=frais,
                 net_amount=net_amount,
                 method=method,
-                address_or_number=user.get('phone', '')
+                address_or_number=getattr(user, 'phone', '')
             )
-        except (ValueError, TypeError):
-            return "Montant invalide.", 400
 
-    # Sinon (GET) : formulaire de retrait
-    return render_template('retrait.html', user=user, methods=methods, withdrawable_balance=withdrawable_balance)
+        except (ValueError, TypeError):
+            flash("Montant invalide.", "danger")
+            return redirect(url_for('retrait_selection'))
+
+    return render_template(
+        'retrait.html',
+        user=user,
+        methods=methods,
+        withdrawable_balance=withdrawable_balance
+    )
 
 
 @app.route('/confirmer_retrait', methods=['POST'])
 def confirmer_retrait():
-    """Validation finale du retrait après confirmation"""
     user_email = get_logged_in_user_email()
     if not user_email:
         return redirect(url_for('connexion'))
 
-    users_data = load_users_data()
-    user = users_data.get(user_email)
+    user = User.query.filter_by(email=user_email).first()
     if not user:
         return redirect(url_for('connexion'))
 
     try:
-        amount = float(request.form.get('amount'))
-        frais = round(amount * 0.10, 2)
-        net_amount = round(amount - frais, 2)
+        # --- Récupération des données du formulaire ---
+        amount = float(request.form.get('amount', 0))
         method = request.form.get('method')
         address_or_number = request.form.get('address_or_number')
 
         if amount < 1500:
-            return "Le montant minimum de retrait est de 1500 XOF.", 400
-        if net_amount > user['balance']:
-            return "Solde insuffisant.", 400
+            flash("Le montant minimum de retrait est de 1500 XOF.", "warning")
+            return redirect(url_for('retrait_selection'))
 
-        # --- Débit du solde ---
-        user['balance'] -= net_amount
+        # --- Calcul frais 10% ---
+        frais = round(amount * 0.10, 2)
+        net_amount = round(amount - frais, 2)
 
-        # --- Enregistrement de la transaction ---
-        transaction_id = str(uuid.uuid4())
-        transaction = {
-            'id': transaction_id,
-            'amount_brut': amount,
-            'frais': frais,
-            'amount_net': net_amount,
-            'method': method,
-            'address_or_number': address_or_number,
-            'status': 'En attente',
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        if net_amount > user.balance:
+            flash("Solde insuffisant.", "danger")
+            return redirect(url_for('retrait_selection'))
 
-        # --- Historique ---
-        user.setdefault('transactions', []).append(transaction)
-        user.setdefault('mon_historique', []).append({
-            'date': transaction['timestamp'],
-            'description': f"Retrait {method}",
-            'montant': -net_amount,
-            'solde_apres': user['balance'],
-            'status': 'En attente'
-        })
+        # --- Débit du solde utilisateur ---
+        user.balance = round(user.balance - net_amount, 2)
 
-        users_data[user_email] = user
-        save_users_data(users_data)
+        # --- Créer l'entrée Withdrawal pour admin ---
+        withdrawal_entry = Withdrawal(
+            id=str(uuid.uuid4()),
+            user_email=user.email,
+            amount=amount,
+            method=method,
+            receiver=address_or_number,
+            status='En attente',
+            timestamp=datetime.utcnow()
+        )
+        db.session.add(withdrawal_entry)
 
-        return redirect(url_for('retrait_success',
-                                transaction_id=transaction_id,
-                                amount=net_amount,
-                                method=method,
-                                address_or_number=address_or_number))
+        # --- Historique utilisateur ---
+        hist_entry = Historique(
+            user_id=user.id,
+            date=datetime.utcnow(),
+            description=f"Retrait via {method}",
+            montant=-net_amount,
+            type='debit',
+            status='En attente',
+            solde_apres=user.balance
+        )
+        db.session.add(hist_entry)
+
+        db.session.commit()
+
+        # Redirection vers la page de succès
+        return redirect(url_for(
+            'retrait_success',
+            transaction_id=withdrawal_entry.id,
+            amount=amount,
+            method=method,
+            address_or_number=address_or_number
+        ))
+
     except Exception as e:
-        return f"Erreur : {str(e)}", 500
+        db.session.rollback()
+        flash(f"Erreur lors du retrait : {str(e)}", "danger")
+        return redirect(url_for('retrait_selection'))
+
 
 @app.route('/retrait_success')
 def retrait_success():
     transaction_id = request.args.get('transaction_id')
     method = request.args.get('method')
     address_or_number = request.args.get('address_or_number')
-    timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
     try:
         amount = float(request.args.get('amount', 0))
     except (ValueError, TypeError):
         amount = 0.0
+
+    timestamp = datetime.utcnow().strftime("%d-%m-%Y %H:%M:%S")
 
     return render_template(
         'retrait_success.html',
@@ -1060,24 +1139,11 @@ def admin_required(f):
 
 @app.route('/admin/deposits', methods=['GET', 'POST'])
 def admin_deposits():
-    users = load_users_data()
-    depots_list = []
+    # --- 1. Lister tous les dépôts depuis la table Transaction ---
+    depots_list = Transaction.query.filter(Transaction.type.startswith('Dépôt')) \
+                                   .order_by(Transaction.date.desc()).all()
 
-    # --- 1. Lister tous les dépôts ---
-    for email, user in users.items():
-        for d in user.get('deposits', []):
-            depots_list.append({
-                'id': d.get('id'),
-                'email': email,
-                'amount': d.get('amount', 0),
-                'method': d.get('method', ''),
-                'status': d.get('status', 'pending'),
-                'created_at': d.get('timestamp', '')
-            })
-
-    depots_list.sort(key=lambda x: x.get('created_at', ''), reverse=True)
-
-    # --- 2. Si l'admin valide ou rejette un dépôt ---
+    # --- 2. Validation ou rejet d'un dépôt ---
     if request.method == 'POST':
         depot_id = request.form.get('depot_id')
         action = request.form.get('action')
@@ -1086,67 +1152,69 @@ def admin_deposits():
             flash("Aucun dépôt sélectionné.", "warning")
             return redirect(url_for('admin_deposits'))
 
-        found = False
-        for email, user in users.items():
-            for d in user.get('deposits', []):
-                if d.get('id') == depot_id:
-                    found = True
-
-                    # === VALIDATION DU DÉPÔT ===
-                    if action == 'validate' and d['status'] == 'pending':
-                        d['status'] = 'accepted'
-                        user['balance'] = round(user.get('balance', 0.0) + float(d['amount']), 2)
-
-                        # 🔹 Historique du filleul
-                        user.setdefault('mon_historique', []).append({
-                            'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            'description': 'Dépôt validé (admin)',
-                            'montant': float(d['amount']),
-                            'status': 'validé'
-                        })
-
-                        # === COMMISSION DE 30% POUR LE PARRAIN ===
-                        parrain_username = user.get('parrain')
-                        if parrain_username and not user.get('has_made_first_deposit', False):
-                            commission = round(float(d['amount']) * 0.3, 2)
-
-                            # Trouver le parrain par son username
-                            for parrain_email, parrain_data in users.items():
-                                if parrain_data.get('username') == parrain_username:
-                                    parrain_data['balance'] = round(parrain_data.get('balance', 0.0) + commission, 2)
-                                    parrain_data.setdefault('mon_historique', []).append({
-                                        'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                        'description': f'Commission de 30% du dépôt de {user["username"]}',
-                                        'montant': commission,
-                                        'status': 'reçu'
-                                    })
-                                    users[parrain_email] = parrain_data
-                                    flash(f"Commission de {commission} XOF ajoutée à {parrain_username}.", "info")
-                                    break
-
-                            # Marquer le filleul comme ayant fait son premier dépôt
-                            user['has_made_first_deposit'] = True
-
-                        flash(f"Dépôt {depot_id} validé et solde crédité.", "success")
-
-                    # === REJET DU DÉPÔT ===
-                    elif action == 'reject' and d['status'] == 'pending':
-                        d['status'] = 'rejected'
-                        flash(f"Dépôt {depot_id} rejeté.", "info")
-
-                    users[email] = user
-                    save_users_data(users)
-                    break
-            if found:
-                break
-
-        if not found:
+        txn = Transaction.query.filter_by(id=depot_id).first()
+        if not txn:
             flash("Dépôt introuvable.", "error")
+            return redirect(url_for('admin_deposits'))
 
+        user = User.query.filter_by(email=txn.user_email).first()
+        if not user:
+            flash("Utilisateur introuvable.", "error")
+            return redirect(url_for('admin_deposits'))
+
+        # --- Valider le dépôt ---
+        if action == 'validate' and txn.status == 'pending':
+            txn.status = 'accepted'
+            user.balance = round(user.balance + txn.amount, 2)
+
+            # Historique du filleul
+            historique = getattr(user, 'mon_historique', [])
+            historique.append({
+                'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'description': 'Dépôt validé (admin)',
+                'montant': txn.amount,
+                'status': 'validé'
+            })
+            user.mon_historique = historique
+
+            # Commission du parrain
+            parrain_username = getattr(user, 'parrain', None)
+            if parrain_username and not user.has_made_first_deposit:
+                commission = round(txn.amount * 0.3, 2)
+                parrain_user = User.query.filter_by(username=parrain_username).first()
+                if parrain_user:
+                    parrain_user.balance = round(parrain_user.balance + commission, 2)
+                    parrain_user.mon_historique = getattr(parrain_user, 'mon_historique', []) + [{
+                        'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'description': f'Commission de 30% du dépôt de {user.username}',
+                        'montant': commission,
+                        'status': 'reçu'
+                    }]
+                    flash(f"Commission de {commission} XOF ajoutée à {parrain_username}.", "info")
+
+                user.has_made_first_deposit = True
+
+            flash(f"Dépôt {depot_id} validé et solde crédité.", "success")
+
+        # --- Rejeter le dépôt ---
+        elif action == 'reject' and txn.status == 'pending':
+            txn.status = 'rejected'
+            flash(f"Dépôt {depot_id} rejeté.", "info")
+
+        db.session.commit()
         return redirect(url_for('admin_deposits'))
 
     # --- 3. Affichage du tableau ---
-    return render_template('admin_deposits.html', depots=depots_list)
+    depots_display = [{
+        'id': d.id,
+        'email': d.user_email,
+        'amount': d.amount,
+        'method': d.type.replace('Dépôt via ', ''),
+        'status': d.status,
+        'created_at': d.date.strftime('%Y-%m-%d %H:%M:%S')
+    } for d in depots_list]
+
+    return render_template('admin_deposits.html', depots=depots_display)
 
 # ----------------------------
 # Admin: lister / valider / rejeter retraits
@@ -1207,45 +1275,41 @@ def parrainage_page():
     if not user_email:
         flash("Veuillez vous connecter pour accéder à votre page de parrainage.", "error")
         return redirect(url_for('connexion'))
-    from flask import request
 
-    users_data = load_users_data()
-    user = users_data.get(user_email)
+    user = User.query.filter_by(email=user_email).first()
     if not user:
         flash("Utilisateur introuvable.", "error")
         return redirect(url_for('connexion'))
 
-    username = user.get('username', user_email.split('@')[0])
+    username = user.username or user_email.split('@')[0]
 
     # 🔹 Liste des filleuls (parrain = username)
-    filleuls = [
-        u_email for u_email, u_data in users_data.items()
-        if u_data.get('parrain') == username
-    ]
+    filleuls_query = User.query.filter_by(parrain=username).all()
+    filleuls = [{"username": u.username or u.email, "email": u.email} for u in filleuls_query]
     referrals_count = len(filleuls)
 
-    # 🔹 Calcul du total des commissions (dans historique + transactions)
+    # 🔹 Calcul du total des commissions (dans historique et transactions)
     total_commissions = 0.0
 
-    for h in user.get('mon_historique', []):
+    # Historique
+    for h in getattr(user, 'mon_historique', []) or []:
         if "Commission 30%" in h.get('description', ""):
             try:
                 total_commissions += float(h.get('montant', 0))
             except (TypeError, ValueError):
-                pass
+                continue
 
-    for t in user.get('transactions', []):
+    # Transactions
+    for t in getattr(user, 'transactions', []) or []:
         if "Commission 30%" in t.get('description', ""):
             try:
                 total_commissions += float(t.get('montant', 0))
             except (TypeError, ValueError):
-                pass
+                continue
 
     # 🔹 Lien de parrainage unique
-    referral_code = username  
-    referral_link = f"{request.url_root}inscription?ref={referral_code}"
-    referral_link = referral_link.replace("http://", "https://")
-    # 🔹 Rendu HTML
+    referral_link = f"{request.url_root.replace('http://', 'https://')}inscription?ref={username}"
+
     return render_template(
         'parrainage.html',
         user=user,
@@ -1257,23 +1321,9 @@ def parrainage_page():
 
 @app.route('/admin/withdrawals', methods=['GET', 'POST'])
 def admin_withdrawals():
-    users = load_users_data()
-    withdrawals = {}
+    # --- Récupérer tous les retraits ---
+    withdrawals = Withdrawal.query.order_by(Withdrawal.timestamp.desc()).all()
 
-    # Extraire tous les retraits "En attente" de tous les utilisateurs
-    for email, u in users.items():
-        for t in u.get('transactions', []):
-            if t.get('status') == 'En attente' and 'address_or_number' in t:
-                withdrawals[t['id']] = {
-                    'email': email,
-                    'amount': t.get('amount', 0),
-                    'method': t.get('method', ''),
-                    'receiver': t.get('address_or_number', ''),
-                    'status': t.get('status', 'En attente'),
-                    'timestamp': t.get('timestamp', '')
-                }
-
-    # --- Gestion POST (validation / rejet) ---
     if request.method == 'POST':
         withdrawal_id = request.form.get('withdrawal_id')
         action = request.form.get('action')
@@ -1282,62 +1332,103 @@ def admin_withdrawals():
             flash("Aucun retrait sélectionné.", "warning")
             return redirect(url_for('admin_withdrawals'))
 
-        # Retrouver l’utilisateur concerné
-        for email, u in users.items():
-            for t in u.get('transactions', []):
-                if t['id'] == withdrawal_id:
-                    if action == 'validate' and t['status'] == 'En attente':
-                        t['status'] = 'Validé'
-                        u.setdefault('mon_historique', []).append({
-                            'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            'description': 'Retrait validé (admin)',
-                            'montant': -float(t['amount']),
-                            'status': 'Validé'
-                        })
-                        flash(f"Retrait {withdrawal_id} validé.", "success")
-                    elif action == 'reject' and t['status'] == 'En attente':
-                        t['status'] = 'Rejeté'
-                        flash(f"Retrait {withdrawal_id} rejeté.", "info")
-                    save_users_data(users)
-                    return redirect(url_for('admin_withdrawals'))
+        w = Withdrawal.query.filter_by(id=withdrawal_id).first()
+        if not w:
+            flash("Retrait introuvable.", "danger")
+            return redirect(url_for('admin_withdrawals'))
 
-        flash("Retrait introuvable.", "error")
+        user = User.query.filter_by(email=w.user_email).first()
+        if not user:
+            flash("Utilisateur introuvable.", "danger")
+            return redirect(url_for('admin_withdrawals'))
+
+        if w.status.lower() in ['en attente', 'pending']:
+            if action == 'validate':
+                w.status = 'accepted'
+                user.balance = round(user.balance - w.amount, 2)
+
+                # Historique
+                hist_entry = Historique(
+                    user_id=user.id,
+                    date=datetime.utcnow(),
+                    description=f"Retrait validé (admin)",
+                    montant=-w.amount,
+                    type='debit',
+                    status='validé',
+                    solde_apres=user.balance
+                )
+                db.session.add(hist_entry)
+                flash(f"Retrait {withdrawal_id} validé.", "success")
+
+            elif action == 'reject':
+                w.status = 'rejected'
+                flash(f"Retrait {withdrawal_id} rejeté.", "info")
+
+            db.session.commit()
+        else:
+            flash("Ce retrait a déjà été traité.", "warning")
+
         return redirect(url_for('admin_withdrawals'))
 
-    # Tri par date décroissante
-    sorted_withdrawals = dict(sorted(withdrawals.items(), key=lambda kv: kv[1].get('timestamp', ''), reverse=True))
+    # Préparer affichage
+    withdrawals_display = [{
+        'id': w.id,
+        'email': w.user_email,
+        'amount': w.amount,
+        'method': w.method,
+        'receiver': w.receiver,
+        'status': w.status,
+        'created_at': w.timestamp.strftime("%Y-%m-%d %H:%M:%S") if w.timestamp else ""
+    } for w in withdrawals]
 
-    return render_template('admin_withdrawals.html', withdrawals=sorted_withdrawals)
+    return render_template('admin_withdrawals.html', withdrawals=withdrawals_display)
 
 @app.route('/historique')
 def historique_page():
-    """Affiche l'historique des transactions de l'utilisateur actuel (ou de l'invité)."""
-
+    """Affiche l'historique des transactions de l'utilisateur actuel."""
     user_email = get_logged_in_user_email()
-    all_users_data = load_users_data()
-
-    user_data = None
-    if user_email:
-        user_data = all_users_data.get(user_email)
-
-    if user_data is None:
-        user_data = {
+    if not user_email:
+        # Utilisateur invité
+        user_info = {
             'username': 'Invité',
-            'balance': 0.0,
-            'mon_historique': [] # L'historique des invités est vide
+            'balance': 0.0
         }
+        user_history = []
+    else:
+        # Récupère l'utilisateur
+        user_info = User.query.filter_by(email=user_email).first()
+        if not user_info:
+            user_info = {
+                'username': 'Invité',
+                'balance': 0.0
+            }
+            user_history = []
+        else:
+            # Récupère toutes les transactions de l'utilisateur
+            transactions = Transaction.query.filter_by(user_email=user_email) \
+                                            .order_by(Transaction.date.desc()).all()
 
-    user_history = user_data.get('mon_historique', [])
+            user_history = []
+            for t in transactions:
+                user_history.append({
+                    'date': t.date.strftime('%Y-%m-%d %H:%M:%S') if t.date else '',
+                    'description': t.description or t.type,
+                    'montant': t.amount if t.type.startswith('Dépôt') else -t.amount,
+                    'status': t.status
+                })
 
-    try:
-        # Tente de trier l'historique par date
-        # Assurez-vous que le format de date ('%d-%m-%Y %H:%M:%S') correspond à celui utilisé à l'enregistrem>
-        user_history.sort(key=lambda x: datetime.strptime(x['date'], '%d-%m-%Y %H:%M:%S'), reverse=True)
-    except Exception as e:
-        print(f"Avertissement: Erreur de tri de l'historique: {e}")
-        pass
+            # Si tu as encore des historiques JSON dans user.mon_historique, tu peux les fusionner
+            if getattr(user_info, 'mon_historique', None):
+                for h in user_info.mon_historique:
+                    user_history.append(h)
 
-    return render_template('mon-historique.html', user_history=user_history, user_info=user_data)
+            # Trie par date décroissante
+            user_history.sort(
+                key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d %H:%M:%S') if x.get('date') else datetime.min,
+                reverse=True
+            )
+
+    return render_template('mon-historique.html', user_history=user_history, user_info=user_info)
 
 INVESTMENT_PLANS = {
     "plan_60_jours": {
@@ -1358,22 +1449,20 @@ INVESTMENT_PLANS = {
     }
 }
 
+
 @app.route('/investi', methods=['GET', 'POST'])
 def investi_page():
-    """Page pour effectuer un investissement."""
     email = get_logged_in_user_email()
     if not email:
         flash("Veuillez vous connecter pour investir.", "error")
         return redirect(url_for('connexion'))
 
-    # Charge toutes les données utilisateurs
-    users_data = load_users_data()
-    user = users_data.get(email)
+    user = User.query.filter_by(email=email).first()
     if not user:
         flash("Utilisateur introuvable.", "error")
         return redirect(url_for('connexion'))
 
-    current_solde = user.get('balance', 0.0)
+    current_solde = user.balance or 0.0
     message = None
 
     if request.method == 'POST':
@@ -1384,121 +1473,125 @@ def investi_page():
             plan_type = "_".join(plan_parts[:-1])
             plan = INVESTMENT_PLANS[plan_type][vip_level]
             cost = plan['investissement']
+            duree_jours = plan['duree_jours']
+            revenu_quotidien = plan.get('gain_quotidien', 0)
+            rendement_total = plan.get('gain_total', revenu_quotidien * duree_jours)
         except Exception:
             message = {"type": "error", "text": "Plan invalide."}
             return render_template('investi.html', plans=INVESTMENT_PLANS, user_solde=current_solde, message=message)
 
         if current_solde < cost:
             message = {"type": "error", "text": f"Solde insuffisant. Vous avez besoin de {cost} XOF."}
-        else:
-            # Débite le solde
-            user['balance'] = round(current_solde - cost, 2)
+            return render_template('investi.html', plans=INVESTMENT_PLANS, user_solde=current_solde, message=message)
 
-            # Crée l'investissement avec clés standardisées
-            new_investment = {
-                "id": str(uuid.uuid4()),
-                "nom": f"{vip_level} ({plan_type})",          # Nom pour le template
-                "montant": cost,                              # Montant investi
-                "date_debut": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "date_fin": (datetime.now() + timedelta(days=plan['duree_jours'])).strftime("%Y-%m-%d %H:%M:%S"),
-                "duree_jours": plan['duree_jours'],
-                "statut": "actif",
-                "revenu_quotidien": plan.get('gain_quotidien', 0),
-                "rendement_total": plan.get('gain_total', 0),
-                "plan_id": plan_id
-            }
+        user.balance = round(current_solde - cost, 2)
 
-            # Ajoute l'investissement à l'utilisateur
-            user.setdefault('investments', []).append(new_investment)
+        new_investment = Investissement(
+            user_email=user.email,
+            nom=f"{vip_level} ({plan_type})",
+            montant=cost,
+            date_debut=datetime.now(),
+            duree_jours=duree_jours,
+            revenu_quotidien=revenu_quotidien,
+            rendement_total=rendement_total,
+            status="En cours",
+            last_credit=None
+        )
+        db.session.add(new_investment)
 
-            # Ajoute l'historique
-            timestamp = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-            user.setdefault('mon_historique', []).append({
-                'date': timestamp,
-                'description': f"Investissement {vip_level} ({plan_type})",
-                'montant': -cost,
-                'solde_apres': user['balance'],
-                'status': 'réussi'
-            })
+        # Historique
+        historique_entry = Historique(
+            user_id=user.id,
+            date=datetime.now(),
+            description=f"Investissement {vip_level} ({plan_type})",
+            montant=-cost,
+            type='debit',
+            status='réussi',
+            solde_apres=user.balance
+        )
+        db.session.add(historique_entry)
 
-            # Sauvegarde les données
-            users_data[email] = user
-            save_users_data(users_data)
+        # Commission parrain
+        if user.parrain:
+            parrain = User.query.filter_by(email=user.parrain).first()
+            if parrain:
+                commission = round(cost * 0.30, 2)
+                parrain.balance = (parrain.balance or 0.0) + commission
+                hist_parrain = Historique(
+                    user_id=parrain.id,
+                    date=datetime.now(),
+                    description=f"Commission parrainage (30%) sur investissement de {user.username}",
+                    montant=commission,
+                    type='credit',
+                    status='Validé',
+                    solde_apres=parrain.balance
+                )
+                db.session.add(hist_parrain)
 
-            # Redirection vers confirmation
-            return redirect(url_for('invest_confirm', investment_id=new_investment['id']))
+        db.session.commit()
+        flash(f"✅ Vous avez investi {cost:,.0f} XOF dans {vip_level} ({plan_type}).", "success")
+        return redirect(url_for('invest_confirm', investment_id=new_investment.id))
 
     return render_template('investi.html', plans=INVESTMENT_PLANS, user_solde=current_solde, message=message)
 
-@app.route('/invest_confirm/<investment_id>')
+
+# --- Confirmation d'investissement ---
+@app.route('/invest_confirm/<int:investment_id>')
 def invest_confirm(investment_id):
     email = get_logged_in_user_email()
     if not email:
         flash("Veuillez vous connecter.", "error")
         return redirect(url_for('connexion'))
 
-    # Charger toutes les données utilisateurs
-    users_data = load_users_data()
-
-    # Récupérer l'utilisateur correspondant à l'email
-    user = users_data.get(email)
-
-    if not user:
-        flash("Utilisateur introuvable.", "error")
-        return redirect(url_for('connexion'))
-
-    # Rechercher l'investissement correspondant
-    investment = next((i for i in user.get('investments', []) if i['id'] == investment_id), None)
+    user = User.query.filter_by(email=email).first()
+    investment = Investissement.query.filter_by(id=investment_id, user_email=user.email).first()
 
     if not investment:
         flash("Investissement introuvable.", "error")
         return redirect(url_for('investi_page'))
 
-    # Rendre la page de confirmation
     return render_template('invest_confirm.html', investment=investment, user=user)
 
-@app.route('/invest_validate/<investment_id>', methods=['POST'])
+
+# --- Validation d'investissement ---
+@app.route('/invest_validate/<int:investment_id>', methods=['POST'])
 def invest_validate(investment_id):
     email = get_logged_in_user_email()
     if not email:
         flash("Veuillez vous connecter.", "error")
         return redirect(url_for('connexion'))
 
-    users_data = load_users_data()
-    user = users_data.get(email)
+    user = User.query.filter_by(email=email).first()
+    investment = Investissement.query.filter_by(id=investment_id, user_email=user.email).first()
 
-    if not user:
-        flash("Utilisateur introuvable.", "error")
-        return redirect(url_for('connexion'))
-
-    # Trouver l'investissement à confirmer
-    investment = next((i for i in user.get('investments', []) if i['id'] == investment_id), None)
     if not investment:
         flash("Investissement introuvable.", "error")
         return redirect(url_for('investi_page'))
 
-    # Mettre à jour le statut et enregistrer dans l’historique
-    investment['statut'] = 'En cours'
-    if 'historique' not in user:
-        user['historique'] = []
-    user['historique'].append(investment)
+    investment.status = 'En cours'
 
-    save_users_data(users_data)
+    historique_entry = Historique(
+        user_id=user.id,
+        date=datetime.now(),
+        description=f"Confirmation de l'investissement {investment.nom}",
+        montant=investment.montant,
+        type='debit',
+        status='En cours',
+        solde_apres=user.balance
+    )
+    db.session.add(historique_entry)
+    db.session.commit()
 
     flash("Votre investissement a été confirmé et ajouté à votre historique ✅", "success")
     return redirect(url_for('dashboard_page'))
 
 @app.route('/referral')
 def referral_page():
-    """Affiche la page de parrainage avec lien et liste des filleuls."""
-    import datetime
+    """Affiche la page de parrainage avec lien et liste des filleuls, avec commission sur premier dépôt."""
     from flask import request
 
     user_email = get_logged_in_user_email()
-    users_data = load_users_data()
-
-    # --- Vérification utilisateur connecté ---
-    if not user_email or user_email not in users_data:
+    if not user_email:
         return render_template(
             'referral.html',
             referral_link=None,
@@ -1506,114 +1599,142 @@ def referral_page():
             message="Veuillez vous connecter pour accéder à votre lien de parrainage."
         )
 
-    user_info = users_data[user_email]
-    username = user_info.get('username', user_email.split('@')[0])
+    # --- Récupération de l'utilisateur depuis la base ---
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return render_template(
+            'referral.html',
+            referral_link=None,
+            filleuls=[],
+            message="Utilisateur introuvable."
+        )
+
+    username = user.username or user_email.split('@')[0]
 
     # --- Génération du lien de parrainage ---
-    referral_code = username  
-    referral_link = f"{request.url_root}inscription?ref={referral_code}"
-    referral_link = referral_link.replace("http://", "https://")
+    referral_code = username
+    referral_link = f"{request.url_root}inscription?ref={referral_code}".replace("http://", "https://")
 
-    filleuls = []
-    now = datetime.datetime.now()
+    filleuls_list = []
+    now = datetime.now()
 
-    # --- Recherche des filleuls dans users.json ---
-    for email, data in users_data.items():
-        if data.get('parrain') == referral_code:  # Le filleul a ce parrain
-            filleul_nom = data.get('username', email)
-            total_depot = 0
-            has_first_deposit = data.get('has_made_first_deposit', False)
+    # --- Recherche des filleuls ---
+    filleuls_users = User.query.filter_by(parrain=username).all()
 
-            # --- Vérifier s'il a un dépôt validé ---
-            for tx in data.get('deposits', []):
-                if tx.get('status', '').lower() in ['validé', 'valide'] and tx.get('amount', 0) > 0:
-                    total_depot += tx.get('amount', 0)
+    for f in filleuls_users:
+        total_depot = 0.0
 
-                    # --- Créditer 30% au parrain sur le premier dépôt ---
-                    if not has_first_deposit:
-                        commission = tx.get('amount', 0) * 0.3
-                        user_info['balance'] = user_info.get('balance', 0) + commission
-                        user_info.setdefault('mon_historique', []).append({
-                            "date": now.strftime("%d-%m-%Y %H:%M:%S"),
-                            "description": f"Commission de parrainage (30%) sur le dépôt de {filleul_nom}",
-                            "montant": commission,
-                            "type": "credit",
-                            "status": "Validé",
-                            "solde_apres": user_info['balance']
-                        })
-                        data['has_made_first_deposit'] = True
+        # Cherche tous les dépôts validés du filleul
+        valid_deposits = Deposit.query.filter_by(user_id=f.id, status='accepted').all()
 
-                        print(f"Commission de {commission} XOF ajoutée à {username} pour le filleul {filleul_nom}")
-                        break
+        for d in valid_deposits:
+            total_depot += d.amount
 
-            filleuls.append({
-                "nom": filleul_nom,
-                "email": email,
-                "total_depot": total_depot
-            })
+        # Vérifie si commission à créditer (premier dépôt seulement)
+        if valid_deposits and not f.has_made_first_deposit:
+            first_deposit = valid_deposits[0]
+            commission = round(first_deposit.amount * 0.3, 2)
 
-    # --- Sauvegarde après mise à jour des commissions ---
-    save_users_data(users_data)
+            # Créditer le solde du parrain
+            user.balance = (user.balance or 0) + commission
+
+            # Ajouter dans l'historique
+            historique_entry = Historique(
+                user_id=user.id,
+                date=now,
+                description=f"Commission de parrainage (30%) sur le dépôt de {f.username or f.email}",
+                montant=commission,
+                status="Validé",
+                solde_apres=user.balance
+            )
+            db.session.add(historique_entry)
+
+            # Marquer le filleul comme ayant fait son premier dépôt
+            f.has_made_first_deposit = True
+
+        filleuls_list.append({
+            "nom": f.username or f.email,
+            "email": f.email,
+            "total_depot": total_depot
+        })
+
+    # Commit final pour tous les changements
+    db.session.commit()
 
     return render_template(
         'referral.html',
         referral_link=referral_link,
-        filleuls=filleuls,
-        user_info=user_info
+        filleuls=filleuls_list,
+        user_info=user
     )
 
 @app.route('/tasks', methods=['GET', 'POST'])
 def tasks_page():
     """Gère la réclamation du bonus quotidien (Route publique)."""
 
-    user_email = get_logged_in_user_email()
-    users_data = load_users_data()
-    user_info = users_data.get(user_email)
-
+    BONUS_AMOUNT = 50.0  # Montant du bonus quotidien en XOF
+    today_str = datetime.utcnow().strftime("%Y-%m-%d")
     message = None
-    BONUS_AMOUNT = 50.00 # Montant du bonus quotidien en XOF
 
-    if user_info is None:
-        current_solde = 0.00
-        bonus_claimed_today = True # Un invité est toujours considéré comme ayant réclamé (ou ne pouvant pas réclamer)
-        message = {"type": "error", "text": "Veuillez vous connecter pour réclamer votre Bonus Quotidien."}
-    else:
-        current_solde = user_info.get('balance', 0.00)
+    user_email = get_logged_in_user_email()
 
-        today_str = datetime.today().strftime("%Y-%m-%d")
-        last_bonus_date = user_info.get('last_bonus_date', '2000-01-01')
+    if not user_email:
+        # Utilisateur non connecté
+        return render_template(
+            'tasks.html',
+            user_solde=0.0,
+            message={"type": "error", "text": "Veuillez vous connecter pour réclamer votre Bonus Quotidien."},
+            bonus_claimed_today=True,
+            bonus_amount=BONUS_AMOUNT
+        )
 
-        bonus_claimed_today = (last_bonus_date == today_str)
+    # Récupère l'utilisateur depuis PostgreSQL
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return render_template(
+            'tasks.html',
+            user_solde=0.0,
+            message={"type": "error", "text": "Utilisateur introuvable."},
+            bonus_claimed_today=True,
+            bonus_amount=BONUS_AMOUNT
+        )
 
-    if request.method == 'POST' and user_info:
+    # Vérifie si le bonus a été réclamé aujourd'hui
+    bonus_claimed_today = (str(user.last_bonus_date) == today_str)
+
+    if request.method == 'POST':
         if not bonus_claimed_today:
+            # Crédit du bonus
+            user.balance = (user.balance or 0.0) + BONUS_AMOUNT
+            user.last_bonus_date = today_str
 
-            user_info['balance'] = round(user_info['balance'] + BONUS_AMOUNT, 2)
-            user_info['last_bonus_date'] = today_str
-            transaction = {
-                "date": datetime.today().strftime("%d-%m-%Y %H:%M:%S"), # Format ajusté pour la compatibilité
-                "description": "Bonus Quotidien réclamé",
-                "montant": BONUS_AMOUNT,
-                "type": "credit", # Ajout du type pour clarification dans l'historique
-                "status": "Validé",
-                "solde_apres": user_info['balance']
-            }
-            user_info.setdefault('mon_historique', []).append(transaction)
-            users_data[user_email] = user_info
-            save_users_data(users_data)
+            # Ajout dans l'historique
+            transaction = Historique(
+                user_id=user.id,
+                date=datetime.utcnow(),
+                description="Bonus Quotidien réclamé",
+                montant=BONUS_AMOUNT,
+                type="credit",
+                status="Validé",
+                solde_apres=user.balance
+            )
+            db.session.add(transaction)
+            db.session.commit()
 
-            current_solde = user_info['balance']
             bonus_claimed_today = True
-
             message = {"type": "success", "text": f"Félicitations ! Vous avez reçu {BONUS_AMOUNT} XOF de Bonus Quotidien."}
         else:
             message = {"type": "error", "text": "Vous avez déjà réclamé votre Bonus Quotidien pour aujourd'hui."}
 
-    return render_template('tasks.html',
-                           user_solde=current_solde,
-                           message=message,
-                           bonus_claimed_today=bonus_claimed_today,
-                           bonus_amount=BONUS_AMOUNT)
+    current_solde = user.balance or 0.0
+
+    return render_template(
+        'tasks.html',
+        user_solde=current_solde,
+        message=message,
+        bonus_claimed_today=bonus_claimed_today,
+        bonus_amount=BONUS_AMOUNT
+    )
 
 if __name__ == '__main__':
     if not os.path.exists(USERS_FILE):
