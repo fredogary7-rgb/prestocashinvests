@@ -1262,7 +1262,7 @@ def reject_retraits(user_email, timestamp):
 
 @app.route('/parrainage')
 def parrainage_page():
-    """Affiche la page de parrainage uniquement pour les utilisateurs connectés."""
+    """Affiche la page de parrainage avec le total des commissions."""
     user_email = get_logged_in_user_email()
     if not user_email:
         flash("Veuillez vous connecter pour accéder à votre page de parrainage.", "error")
@@ -1275,31 +1275,24 @@ def parrainage_page():
 
     username = user.username or user_email.split('@')[0]
 
-    # 🔹 Liste des filleuls (parrain = username)
+    # 🔹 Liste des filleuls
     filleuls_query = User.query.filter_by(parrain=username).all()
     filleuls = [{"username": u.username or u.email, "email": u.email} for u in filleuls_query]
     referrals_count = len(filleuls)
 
-    # 🔹 Calcul du total des commissions (dans historique et transactions)
+    # 🔹 Calcul du total des commissions depuis la table Historique
     total_commissions = 0.0
+    historiques = Historique.query.filter(
+        Historique.user_id == user.id,
+        Historique.description.ilike('%Commission de parrainage%')
+    ).all()
 
-    # Historique
-    for h in getattr(user, 'mon_historique', []) or []:
-        if "Commission 30%" in h.get('description', ""):
-            try:
-                total_commissions += float(h.get('montant', 0))
-            except (TypeError, ValueError):
-                continue
+    for h in historiques:
+        try:
+            total_commissions += float(h.montant)
+        except (TypeError, ValueError):
+            pass
 
-    # Transactions
-    for t in getattr(user, 'transactions', []) or []:
-        if "Commission 30%" in t.get('description', ""):
-            try:
-                total_commissions += float(t.get('montant', 0))
-            except (TypeError, ValueError):
-                continue
-
-    # 🔹 Lien de parrainage unique
     referral_link = f"{request.url_root.replace('http://', 'https://')}inscription?ref={username}"
 
     return render_template(
@@ -1377,44 +1370,46 @@ def admin_withdrawals():
 
 @app.route('/historique')
 def historique_page():
-    """Affiche l'historique des transactions de l'utilisateur actuel."""
+    """Affiche l'historique complet (dépôts + retraits) de l'utilisateur actuel."""
     user_email = get_logged_in_user_email()
     if not user_email:
-        # Utilisateur invité
-        user_info = {
-            'username': 'Invité',
-            'balance': 0.0
-        }
+        user_info = {'username': 'Invité', 'balance': 0.0}
         user_history = []
     else:
-        # Récupère l'utilisateur
         user_info = User.query.filter_by(email=user_email).first()
         if not user_info:
-            user_info = {
-                'username': 'Invité',
-                'balance': 0.0
-            }
+            user_info = {'username': 'Invité', 'balance': 0.0}
             user_history = []
         else:
-            # Récupère toutes les transactions de l'utilisateur
-            transactions = Transaction.query.filter_by(user_email=user_email) \
-                                            .order_by(Transaction.date.desc()).all()
-
             user_history = []
+
+            # --- 1️⃣ Transactions de dépôts ---
+            transactions = Transaction.query.filter_by(user_email=user_email)\
+                                            .order_by(Transaction.date.desc()).all()
             for t in transactions:
                 user_history.append({
                     'date': t.date.strftime('%Y-%m-%d %H:%M:%S') if t.date else '',
-                    'description': t.description or t.type,
+                    'description': t.description or t.type or 'Dépôt',
                     'montant': t.amount if t.type.startswith('Dépôt') else -t.amount,
                     'status': t.status
                 })
 
-            # Si tu as encore des historiques JSON dans user.mon_historique, tu peux les fusionner
-            if getattr(user_info, 'mon_historique', None):
-                for h in user_info.mon_historique:
-                    user_history.append(h)
+            # --- 2️⃣ Historique des retraits (table Historique) ---
+            retraits = Historique.query.join(User).filter(User.email == user_email)\
+                                       .order_by(Historique.date.desc()).all()
+            for h in retraits:
+                user_history.append({
+                    'date': h.date.strftime('%Y-%m-%d %H:%M:%S') if h.date else '',
+                    'description': h.description or 'Retrait',
+                    'montant': h.montant,
+                    'status': h.status
+                })
 
-            # Trie par date décroissante
+            # --- 3️⃣ Fusionner avec ancien historique JSON s’il existe ---
+            if getattr(user_info, 'mon_historique', None):
+                user_history.extend(user_info.mon_historique)
+
+            # --- 4️⃣ Trier par date décroissante ---
             user_history.sort(
                 key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d %H:%M:%S') if x.get('date') else datetime.min,
                 reverse=True
