@@ -1,37 +1,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Choisir une méthode de dépôt</title>
-<style>
-body {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-  font-family: 'Poppins', sans-serif;
-  display: flex; justify-content: center; align-items: center; height: 100vh;
-  margin: 0;
-}
-.card {
-  background: #fff; padding: 2rem; border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-  animation: slideIn 0.8s ease;
-}
-button {
-  background: #007bff; color: #fff; border: none;
-  padding: 0.8rem 1.2rem; margin: 0.4rem 0; border-radius: 8px;
-  cursor: pointer; transition: all 0.3s ease; width: 100%;
-}
-button:hover { transform: scale(1.05); background: #0056b3; }
-@keyframes slideIn { from {opacity:0; transform:translateY(-20px);} to {opacity:1; transform:translateY(0);} }
-</style>
-</head>
-<body>
-<div class="card">
-  <h2>Choisis ta méthode de dépôt</h2>
-  {% for key, account in payment_methods.items() %}
-  <form action="{{ url_for('deposit_page', method=key) }}">
-    <button>{{ account.name }} ({{ account.currency }})</button>
-  </form>
-  {% endfor %}
-</div>
-</body>
+
+<html lang="fr">  
+<head>  
+<meta charset="UTF-8">  
+<title>Choisir une méthode de dépôt</title>  
+<style>  
+body {  
+  background: linear-gradient(135deg, #4facfe, #00f2fe);  
+  font-family: 'Poppins', sans-serif;  
+  display: flex; justify-content: center; align-items: center; height: 100vh;  
+  margin: 0;  
+}  
+.card {  
+  background: #fff; padding: 2rem; border-radius: 16px;  
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);  
+  animation: slideIn 0.8s ease;  
+}  
+button {  
+  background: #007bff; color: #fff; border: none;  
+  padding: 0.8rem 1.2rem; margin: 0.4rem 0; border-radius: 8px;  
+  cursor: pointer; transition: all 0.3s ease; width: 100%;  
+}  
+button:hover { transform: scale(1.05); background: #0056b3; }  
+@keyframes slideIn { from {opacity:0; transform:translateY(-20px);} to {opacity:1; transform:translateY(0);} }  
+</style>  
+</head>  
+<body>  
+<div class="card">  
+  <h2>Choisis ta méthode de dépôt</h2>  
+  {% for key, account in payment_methods.items() %}  
+  <form action="{{ url_for('deposit_page', method=key) }}">  
+    <button>{{ account.name }} ({{ account.currency }})</button>  
+  </form>  
+  {% endfor %}  
+</div>                                                                                                                  </body>  
 </html>

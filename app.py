@@ -14,6 +14,9 @@ app.secret_key = "ma_cle_ultra_secrete_2024_preto_cash"
 DATABASE_URL = "postgresql+psycopg://neondb_owner:npg_P0EKkxdQ8Nit@..."
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg://neondb_owner:npg_P0EKkxdQ8Nit@ep-solitary-tooth-abfeect2-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# ----------------------------
+# Configuration Kkiapay
+# ----------------------------
 
 migrate = Migrate(app, db)
 DATA_DIR = "data"
@@ -373,25 +376,14 @@ def profile_page():
     )
 
 
+# ----------------------------
+# Configuration Kkiapay
+# ----------------------------
+
 PAYMENT_ACCOUNTS = {
-    "xof": {
-        "name": "3000 XOF",
-        "link": "https://app.payix.me/payment/25721a2a-a4b0-40d2-bf0d-d03aa615ce2a",
-        "currency": "5 Pays"
-    },
-    "xaf": {
-        "name": "5000 XOF",
-        "link": "https://app.payix.me/payment/a9171154-6b0a-4ec3-8dcb-5fab471f7b63",
-        "currency": "5 Pays"
-    },
-    "usdt": {
-        "name": "10000 XOF",
-        "link": "https://app.payix.me/payment/2f5b56e7-377e-4a28-9f26-3f741a69e98d",
-        "currency": "5 Pays"
-    },
     "euro": {
         "name": "Tous les pays",
-        "link": "https://www.pay.moneyfusion.net/presto-cash-_1761998050886/",
+        "link": "https://www.pay.moneyfusion.net/presto-cash-_1762687066538/",
         "currency": "26 Pays"
     },
     "crypto": {
