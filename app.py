@@ -792,50 +792,25 @@ VIP_PRODUITS = {
 @app.route('/produits_rapide')
 def produits_rapide_page():
     """
-    Page Produits Rapides - accessible uniquement si l'utilisateur a investi >= 15000 dans un plan de 21 jours.
+    Page Produits Rapides - accessible uniquement si l'utilisateur a fait un dépôt >= 9000.
     """
     user_email = get_logged_in_user_email()
     if not user_email:
-        return redirect(url_for('connexion'))  # même logique que decouvrir
+        return redirect(url_for('connexion'))
 
     user = User.query.filter_by(email=user_email).first()
     if not user:
         return redirect(url_for('connexion'))
 
-    # Récupère les investissements de l'utilisateur
-    investissements = Investissement.query.filter_by(user_email=user.email).all()
-    now = datetime.now()
-    eligible_rapide = False
-
-    for inv in investissements:
-        # Vérifie les plans éligibles pour débloquer les produits rapides
-        if inv.montant >= 15000 and inv.duree_jours == 21:
-            eligible_rapide = True
-
-        # Termine automatiquement les investissements arrivés à échéance
-        date_fin = inv.date_debut + timedelta(days=inv.duree_jours)
-        if now >= date_fin and inv.status != 'Terminé':
-            inv.status = 'Terminé'
-            # Créditer le solde si terminé
-            user.balance += inv.rendement_total
-            hist_credit = Historique(
-                user_id=user.id,
-                date=datetime.utcnow(),
-                description=f"Crédit final de l'investissement {inv.nom}",
-                montant=inv.rendement_total,
-                type='credit',
-                status='Validé',
-                solde_apres=user.balance
-            )
-            db.session.add(hist_credit)
-            db.session.commit()
+    # Vérifie si l'utilisateur a déjà déposé au moins 9000
+    total_depots = user.total_deposits if hasattr(user, 'total_deposits') else 0
+    eligible_rapide = total_depots >= 9000
 
     if not eligible_rapide:
         return render_template('produits_bloque.html', user_info=user)
 
     produits_rapide = list(VIP_PRODUITS.values()) if isinstance(VIP_PRODUITS, dict) else []
     return render_template('produits_rapide.html', produits=produits_rapide, user_info=user)
-
 
 @app.route('/investir_rapide/<product_id>', methods=['GET', 'POST'])
 def investir_rapide(product_id):
