@@ -1,124 +1,154 @@
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Découvrir les Offres VIP</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Découvrir les Offres VIP - PrestoCash</title>
+  <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #0a2d6b, #123d88);
-      color: #333;
-      min-height: 100vh;
-      animation: fadeIn 1s ease-in-out;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      color: #0d47a1;
+      margin: 0;
+      padding: 0;
     }
 
-    /* === ANIMATIONS === */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
+    h1 {
+      text-align: center;
+      font-size: 1.8em;
+      margin-top: 25px;
+      color: #0d47a1;
+      animation: fadeIn 1s ease-in;
     }
 
-    @keyframes cardPop {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
+    p.subtitle {
+      text-align: center;
+      color: #1565c0;
+      margin-bottom: 25px;
+      font-size: 1.1em;
+    }
+
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      padding: 10px;
     }
 
     .product-card {
-      animation: cardPop 0.7s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      padding: 10px 15px;
+      width: 95%;
+      max-width: 700px;
       transition: all 0.3s ease;
+      animation: fadeUp 0.6s ease;
     }
 
     .product-card:hover {
-      transform: translateY(-5px) scale(1.02);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(33,150,243,0.25);
     }
 
     .product-image {
-      width: 130px;
-      height: 130px;
-      object-fit: cover;
-      border-radius: 1rem;
-      border: 3px solid #e5e7eb;
-      transition: transform 0.3s ease;
+      flex: 0 0 120px;
+      height: 100px;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #f1f1f1;
     }
 
-    .product-card:hover .product-image {
-      transform: scale(1.05);
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .product-info {
+      flex: 1;
+      margin-left: 15px;
+      text-align: left;
+    }
+
+    .product-info h2 {
+      font-size: 1.1em;
+      color: #0d47a1;
+      margin: 0 0 5px;
+    }
+
+    .product-info p {
+      margin: 3px 0;
+      color: #333;
+      font-size: 0.9em;
+    }
+
+    .product-price {
+      font-weight: bold;
+      color: #e53935;
+    }
+
+    .product-revenue {
+      color: #2e7d32;
+      font-weight: bold;
     }
 
     .buy-btn {
-      background: linear-gradient(135deg, #00b14f, #00923d);
+      background: linear-gradient(90deg, #42a5f5, #1e88e5);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.9em;
       transition: all 0.3s ease;
     }
 
     .buy-btn:hover {
-      transform: translateY(-2px);
-      background: linear-gradient(135deg, #00923d, #00b14f);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      background: linear-gradient(90deg, #1e88e5, #1565c0);
+      transform: scale(1.05);
     }
 
-    .page-title {
-      text-align: center;
-      color: white;
-      font-weight: 700;
-      font-size: 2rem;
-      margin-top: 30px;
-      margin-bottom: 40px;
-      letter-spacing: 1px;
-      animation: fadeIn 1.2s ease;
+    @keyframes fadeUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
-    </style>
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body>
+  <h1>🌟 Nos Offres VIP</h1>
+  <p class="subtitle">Découvrez nos formules d’investissement exclusives et rentables.</p>
 
-    <h1 class="page-title">Nos Offres d'Investissement VIP</h1>
-
-    <div class="max-w-5xl mx-auto space-y-6">
-        {% for product in products %}
-        <div class="product-card bg-white rounded-2xl shadow-xl p-4 md:p-6 flex flex-col md:flex-row items-center border-l-8
-                    {% if loop.index == 1 %}border-blue-500{% elif loop.index == 2 %}border-indigo-500{% elif loop.index == 3 %}border-purple-500{% else %}border-gray-500{% endif %} 
-                    hover:shadow-2xl transition duration-300">
-
-            <img src="{{ url_for('static', filename='images/' + product.image_url) }}"
-                 alt="{{ product.nom }}"
-                 class="product-image mb-4 md:mb-0 md:mr-6">
-
-            <div class="flex-1 text-center md:text-left">
-                <h2 class="text-2xl font-extrabold text-blue-800 mb-2">{{ product.nom }}</h2>
-                <p class="text-gray-600 mb-3">{{ product.description }}</p>
-
-                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                    <p><strong>Prix d'Achat :</strong></p>
-                    <p class="text-right text-red-600 font-bold">
-                        {{ "{:,.0f}".format(product.montant_min) }} XOF
-                    </p>
-
-                    <p><strong>Revenu Quotidien :</strong></p>
-                    <p class="text-right text-green-600 font-bold">
-                        {{ "{:,.0f}".format(product.revenu_quotidien) }} XOF
-                    </p>
-
-                    <p><strong>Durée :</strong></p>
-                    <p class="text-right font-medium text-gray-700">{{ product.duree_jours }} jours</p>
-
-                    <p><strong>Rendement Total :</strong></p>
-                    <p class="text-right text-blue-600 font-extrabold">
-                        {{ "{:,.0f}".format(product.rendement_total) }} XOF
-                    </p>
-                </div>
-            </div>
-
-            <div class="mt-4 md:mt-0 md:ml-8 flex flex-col items-center">
-                <a href="{{ url_for('investir', product_id=product.id) }}"
-                   class="buy-btn block w-full md:w-auto text-white text-center font-bold py-3 px-6 rounded-xl shadow-lg transition duration-300 transform">
-                   Acheter VIP
-                </a>
-                <span class="text-xs text-gray-500 mt-2">Démarrez vos revenus dès maintenant</span>
-            </div>
+  <div class="product-list">
+    {% for product in products %}
+      <div class="product-card">
+        <div class="product-image">
+          <img src="{{ url_for('static', filename='images/' + product.image_url) }}" alt="{{ product.nom }}">
         </div>
-        {% endfor %}
-    </div>
 
+        <div class="product-info">
+          <h2>{{ product.nom }}</h2>
+          <p><strong>Durée :</strong> {{ product.duree_jours }} jours</p>
+          <p><strong>Revenu total :</strong> {{ "{:,.0f}".format(product.rendement_total) }} XOF</p>
+          <p><strong>Revenu quotidien :</strong> <span class="product-revenue">{{ "{:,.0f}".format(product.revenu_quotidien) }}</span> XOF</p>
+          <p><strong>Prix :</strong> <span class="product-price">{{ "{:,.0f}".format(product.montant_min) }}</span> XOF</p>
+        </div>
+
+        <a href="{{ url_for('investir', product_id=product.id) }}">
+          <button class="buy-btn">Acheter VIP</button>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
 </body>
 </html>

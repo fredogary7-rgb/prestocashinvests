@@ -723,13 +723,16 @@ def investir(product_id):
     return render_template('investir.html', product=product, message=None, user_info=user)
 
 # --- Produits rapides ---
+# ----------------------------
+# Produits d’investissement rapide
+# ----------------------------
 VIP_PRODUITS = {
     'VIP3K': {
         'id': 'VIP3K',
         'nom': 'VIP Mini',
         'montant_min': 3000,
-        'duree_jours': 3,
-        'revenu_quotidien': 1800,
+        'duree_jours': 5,
+        'revenu_quotidien': 480,
         'rendement_total': 5400,
         'description': "Le meilleur point de départ pour investir.",
         'image_url': 'prestige.png',
@@ -738,8 +741,8 @@ VIP_PRODUITS = {
         'id': 'VIP9K',
         'nom': 'VIP Découverte',
         'montant_min': 9000,
-        'duree_jours': 3,
-        'revenu_quotidien': 5400,
+        'duree_jours': 5,
+        'revenu_quotidien': 1440,
         'rendement_total': 16200,
         'description': "Augmentez votre potentiel avec un investissement intermédiaire.",
         'image_url': 'decouverte.png',
@@ -748,8 +751,8 @@ VIP_PRODUITS = {
         'id': 'VIP15K',
         'nom': 'VIP Pro',
         'montant_min': 15000,
-        'duree_jours': 3,
-        'revenu_quotidien': 9000,
+        'duree_jours': 5,
+        'revenu_quotidien': 2400,
         'rendement_total': 27000,
         'description': "La voie rapide vers des gains significatifs.",
         'image_url': 'pro.png',
@@ -758,8 +761,8 @@ VIP_PRODUITS = {
         'id': 'VIP30K',
         'nom': 'VIP Expert',
         'montant_min': 30000,
-        'duree_jours': 3,
-        'revenu_quotidien': 18000,
+        'duree_jours': 5,
+        'revenu_quotidien': 4800,
         'rendement_total': 54000,
         'description': "Optimisez vos revenus avec cette offre de pointe.",
         'image_url': 'expert.png',
@@ -768,8 +771,8 @@ VIP_PRODUITS = {
         'id': 'VIP60K',
         'nom': 'VIP Premium',
         'montant_min': 60000,
-        'duree_jours': 3,
-        'revenu_quotidien': 36000,
+        'duree_jours': 5,
+        'revenu_quotidien': 9600,
         'rendement_total': 108000,
         'description': "Maximisez votre portefeuille avec un investissement majeur.",
         'image_url': 'premium.png',
@@ -778,129 +781,119 @@ VIP_PRODUITS = {
         'id': 'VIP120K',
         'nom': 'VIP Ultime',
         'montant_min': 120000,
-        'duree_jours': 3,
-        'revenu_quotidien': 72000,
+        'duree_jours': 5,
+        'revenu_quotidien': 19200,
         'rendement_total': 216000,
         'description': "Le summum des opportunités d'investissement rapide.",
         'image_url': 'ultime.png',
     }
 }
 
-
-
-# --- Gestion des produits VIP et Rapides ---
 @app.route('/produits_rapide')
 def produits_rapide_page():
+    """
+    Page Produits Rapides - accessible uniquement si l'utilisateur a investi >= 15000 dans un plan de 21 jours.
+    """
     user_email = get_logged_in_user_email()
     if not user_email:
-        flash("Veuillez vous connecter pour accéder aux produits rapides.", "error")
-        return redirect(url_for('connexion'))
+        return redirect(url_for('connexion'))  # même logique que decouvrir
 
     user = User.query.filter_by(email=user_email).first()
     if not user:
-        flash("Utilisateur introuvable.", "error")
         return redirect(url_for('connexion'))
 
+    # Récupère les investissements de l'utilisateur
+    investissements = Investissement.query.filter_by(user_email=user.email).all()
     now = datetime.now()
-    updated = False
+    eligible_rapide = False
 
-    # Gestion des investissements en mémoire (VIP ou Rapide)
-    if not hasattr(user, "investissements_vip") or user.investissements_vip is None:
-        user.investissements_vip = []
+    for inv in investissements:
+        # Vérifie les plans éligibles pour débloquer les produits rapides
+        if inv.montant >= 15000 and inv.duree_jours == 21:
+            eligible_rapide = True
 
-    for investment in user.investissements_vip:
-        date_debut = datetime.strptime(investment.get('date_debut', now.strftime("%Y-%m-%d %H:%M:%S")),
-                                       "%Y-%m-%d %H:%M:%S")
-        duree_jours = int(investment.get('duree_jours', 0))
-        date_fin = date_debut + timedelta(days=duree_jours)
-
-        if now >= date_fin and investment.get('status') != 'Terminé':
-            investment['status'] = 'Terminé'
-            updated = True
-
-        # Revenus quotidiens
-        last_credit_str = investment.get('last_credit', investment.get('date_debut', now.strftime("%Y-%m-%d %H:%M:%S")))
-        last_credit = datetime.strptime(last_credit_str, "%Y-%m-%d %H:%M:%S")
-        days_passed = (now.date() - last_credit.date()).days
-
-        if days_passed > 0:
-            revenu_quotidien = float(investment.get('revenu_quotidien', 0))
-            total_gain = revenu_quotidien * days_passed
-            user.balance = round((user.balance or 0) + total_gain, 2)
-
-            hist_entry = Historique(
+        # Termine automatiquement les investissements arrivés à échéance
+        date_fin = inv.date_debut + timedelta(days=inv.duree_jours)
+        if now >= date_fin and inv.status != 'Terminé':
+            inv.status = 'Terminé'
+            # Créditer le solde si terminé
+            user.balance += inv.rendement_total
+            hist_credit = Historique(
                 user_id=user.id,
-                date=now,
-                description=f"Revenus quotidiens {investment.get('nom', 'VIP')} ({days_passed} jours)",
-                montant=total_gain,
+                date=datetime.utcnow(),
+                description=f"Crédit final de l'investissement {inv.nom}",
+                montant=inv.rendement_total,
                 type='credit',
-                status='Credité',
+                status='Validé',
                 solde_apres=user.balance
             )
-            db.session.add(hist_entry)
-            investment['last_credit'] = now.strftime("%Y-%m-%d %H:%M:%S")
-            updated = True
+            db.session.add(hist_credit)
+            db.session.commit()
 
-    if updated:
-        db.session.commit()
-
-    # Vérification seuil pour accéder aux produits rapides
-    total_depots = sum(
-        t.amount for t in Transaction.query.filter_by(user_email=user.email).all()
-        if str(t.status).lower() in ['accepté', 'accepted', 'validé']
-    )
-
-    if total_depots < 15000:
-        flash("⚠️ Vous devez avoir au moins 15 000 XOF de dépôts cumulés pour accéder aux produits rapides.", "warning")
-        return render_template('produits_bloque.html', user_info=user, total_depots=total_depots)
+    if not eligible_rapide:
+        return render_template('produits_bloque.html', user_info=user)
 
     produits_rapide = list(VIP_PRODUITS.values()) if isinstance(VIP_PRODUITS, dict) else []
-    return render_template('produits_rapide.html', user_info=user, produits=produits_rapide)
+    return render_template('produits_rapide.html', produits=produits_rapide, user_info=user)
 
 
 @app.route('/investir_rapide/<product_id>', methods=['GET', 'POST'])
 def investir_rapide(product_id):
+    """Permet à un utilisateur d'investir dans un produit rapide (5 jours)."""
     user_email = get_logged_in_user_email()
     if not user_email:
-        flash("Veuillez vous connecter pour investir.", "error")
         return redirect(url_for('connexion'))
 
     user = User.query.filter_by(email=user_email).first()
-    product = VIP_PRODUITS.get(product_id) if isinstance(VIP_PRODUITS, dict) else None
+    product = VIP_PRODUITS.get(product_id)
 
-    if not user or not product:
-        flash("Produit ou utilisateur introuvable.", "error")
+    if not product or not user:
+        flash("Produit ou utilisateur introuvable.", "danger")
         return redirect(url_for('produits_rapide_page'))
 
-    if request.method == 'GET':
-        return render_template('investir_confirm.html', product=product, user_info=user)
+    # Ajuste la durée du produit à 5 jours
+    duree_jours = 5
+    revenu_total = product.get('revenu_quotidien', 0) * duree_jours
 
-    amount = float(product.get('montant_min', 0))
-    if (user.balance or 0.0) < amount:
-        flash("⚠️ Solde insuffisant pour cet investissement.", "danger")
-        return redirect(url_for('produits_rapide_page'))
+    if request.method == 'POST':
+        montant = float(product['montant_min'])
+        if user.balance < montant:
+            return render_template('investir.html', product=product, message="⚠️ Solde insuffisant.", user_info=user)
 
-    user.balance = round(user.balance - amount, 2)
+        # Débiter le solde
+        user.balance -= montant
 
-    if not hasattr(user, "investissements_vip") or user.investissements_vip is None:
-        user.investissements_vip = []
+        # Crée un investissement de 5 jours
+        new_invest = Investissement(
+            user_email=user.email,
+            nom=product['nom'],
+            montant=montant,
+            date_debut=datetime.utcnow(),
+            duree_jours=duree_jours,
+            revenu_quotidien=product['revenu_quotidien'],
+            rendement_total=revenu_total,
+            status="En cours"
+        )
+        db.session.add(new_invest)
 
-    user.investissements_vip.append({
-        'id': product_id,
-        'nom': product.get('nom', 'Produit rapide'),
-        'montant': amount,
-        'revenu_quotidien': product.get('revenu_quotidien', 0),
-        'rendement_total': product.get('rendement_total', 0),
-        'duree_jours': product.get('duree_jours', 3),
-        'date_debut': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'status': 'En cours'
-    })
+        # Historique
+        hist_entry = Historique(
+            user_id=user.id,
+            date=datetime.utcnow(),
+            description=f"Investissement Rapide: {product['nom']}",
+            montant=-montant,
+            type='debit',
+            status='En cours',
+            solde_apres=user.balance
+        )
+        db.session.add(hist_entry)
+        db.session.commit()
 
-    add_history_entry(user_email, f"Investissement rapide : {product.get('nom')}", -amount, 'En cours')
-    db.session.commit()
+        message = f"✅ Investissement de {montant:,.0f} XOF dans {product['nom']} pour 5 jours effectué avec succès !"
+        return render_template('investir.html', product=product, message=message, user_info=user)
 
-    flash(f"✅ Vous avez investi {amount:,.0f} XOF dans {product.get('nom')}.", "success")
-    return redirect(url_for('produits_rapide_page'))
+    return render_template('investir.html', product=product, message=None, user_info=user)
+
 # ----------------------------
 @app.route('/mes_commandes')
 def mes_commandes_page():
