@@ -1255,25 +1255,30 @@ def reject_retraits(user_email, timestamp):
 
 @app.route('/parrainage')
 def parrainage_page():
-    """Affiche la page de parrainage avec le total des commissions."""
+    """Affiche la page de parrainage avec le lien, la liste des filleuls et le total des commissions."""
     user_email = get_logged_in_user_email()
     if not user_email:
         flash("Veuillez vous connecter pour accéder à votre page de parrainage.", "error")
         return redirect(url_for('connexion'))
 
+    # 🔹 Récupérer l'utilisateur connecté
     user = User.query.filter_by(email=user_email).first()
     if not user:
         flash("Utilisateur introuvable.", "error")
         return redirect(url_for('connexion'))
 
+    # 🔹 Déterminer le nom d'utilisateur (ou fallback sur l'email)
     username = user.username or user_email.split('@')[0]
 
-    # 🔹 Liste des filleuls
+    # 🔹 Générer le lien de parrainage complet
+    referral_link = f"{request.url_root.replace('http://', 'https://')}inscription?ref={username}"
+
+    # 🔹 Lister les filleuls (ceux qui ont mis le parrain à 'username')
     filleuls_query = User.query.filter_by(parrain=username).all()
-    filleuls = [{"username": u.username or u.email, "email": u.email} for u in filleuls_query]
+    filleuls = [{"username": f.username or f.email, "email": f.email} for f in filleuls_query]
     referrals_count = len(filleuls)
 
-    # 🔹 Calcul du total des commissions depuis la table Historique
+    # 🔹 Calculer le total des commissions depuis la table Historique
     total_commissions = 0.0
     historiques = Historique.query.filter(
         Historique.user_id == user.id,
@@ -1284,10 +1289,9 @@ def parrainage_page():
         try:
             total_commissions += float(h.montant)
         except (TypeError, ValueError):
-            pass
+            continue
 
-    referral_link = f"{request.url_root.replace('http://', 'https://')}inscription?ref={username}"
-
+    # 🔹 Rendre la page
     return render_template(
         'parrainage.html',
         user=user,

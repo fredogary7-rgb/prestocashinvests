@@ -168,7 +168,7 @@
     .back-link:hover {
       text-decoration: underline;
     }
-  </style>
+</style>
 </head>
 <body>
   <div class="dashboard-main">
@@ -186,26 +186,37 @@
       </div>
     </div>
 
+    <!-- 🔹 Lien de parrainage -->
     <div class="referral-input-group">
+      <input type="text" id="referral-link" readonly value="{{ referral_link }}" />
       <button class="copy-btn" onclick="copyReferral()">
         <i class="ri-file-copy-line"></i> Copier mon lien de parrainage
       </button>
-      <p class="code">Code unique : <strong>{{ user.referral_code }}</strong></p>
+      <p class="code">
+        Code unique : <strong>{{ user.username or user.email.split('@')[0] }}</strong>
+      </p>
     </div>
 
-    <a href="https://whatsapp.com/channel/0029VbBotolLikg6P6RSOq1S" target="_blank" class="whatsapp-link">
+    <a href="https://whatsapp.com/channel/0029VbBotolLikg6P6RSOq1S"
+       target="_blank"
+       class="whatsapp-link">
       <i class="ri-whatsapp-line"></i> Rejoindre la communauté WhatsApp
     </a>
 
+    <!-- 🔹 Liste des filleuls -->
     {% if referrals_count > 0 %}
-      <h4 style="margin-top: 30px; text-align:center;">Vos Filleuls ({{ referrals_count }})</h4>
+      <h4 style="margin-top: 30px; text-align:center;">
+        Vos Filleuls ({{ referrals_count }})
+      </h4>
       <ul class="referral-list">
-        {% for email in user.referrals_list %}
-          <li>{{ email }}</li>
+        {% for filleul in filleuls %}
+          <li>{{ filleul.username }} – {{ filleul.email }}</li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="empty-msg">Vous n'avez pas encore de filleul. Partagez votre lien ci-dessus !</p>
+      <p class="empty-msg">
+        Vous n'avez pas encore de filleul. Partagez votre lien ci-dessus !
+      </p>
     {% endif %}
 
     <a href="{{ url_for('dashboard_page') }}" class="back-link">← Retour au Tableau de Bord</a>
@@ -213,8 +224,8 @@
 
   <script>
     function copyReferral() {
-      const url = "{{ url_for('referral_page', ref=user.referral_code, _external=True) }}";
-      navigator.clipboard.writeText(url);
+      const input = document.getElementById("referral-link");
+      navigator.clipboard.writeText(input.value);
       alert("✅ Lien de parrainage copié !");
     }
   </script>

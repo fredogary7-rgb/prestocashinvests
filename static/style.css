@@ -1,3 +1,32 @@
+<style>
+  .filleul-item {
+    background: #f6f6f6;
+    margin: 5px 0;
+    padding: 10px;
+    border-left: 4px solid #22c55e;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #333;
+  }
+
+  .toggle-btn {
+    display: block;
+    margin: 15px auto;
+    padding: 8px 20px;
+    background: linear-gradient(to right, #6366f1, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+  }
+
+  .toggle-btn:hover {
+    background: linear-gradient(to right, #4f46e5, #2563eb);
+  }
+</style>
+
 /* Fichier : static/style.css - Styles Unifiés PRESTO CASH (Centré et Limité - FINAL) */
 
 /* --- STYLE GÉNÉRAL ET CENTRAGE --- */
