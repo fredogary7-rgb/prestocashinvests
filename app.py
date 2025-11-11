@@ -188,61 +188,66 @@ def inscription_page():
     referral_code = request.args.get('ref')
     message = None
 
-    users_data = load_users_data()
-
     if request.method == 'POST':
-        username = request.form.get('username')
+        username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password')
-        phone = request.form.get('phone', '')
+        phone = request.form.get('phone', '').strip()
         parrainage_code = request.form.get('referral_code', referral_code)
 
         if not email or not password:
             message = {"type": "error", "text": "Email et mot de passe requis."}
             return render_template('inscription.html', message=message, referral_code=referral_code)
 
-        if email in users_data:
+        # Vérifie si l'utilisateur existe déjà
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
             message = {"type": "error", "text": "Cet email est déjà enregistré."}
-        else:
-            # Crédit initial de 300 XOF
-            initial_balance = INITIAL_BALANCE + 300
+            return render_template('inscription.html', message=message, referral_code=referral_code)
 
-            users_data[email] = {
-                "username": username or email.split('@')[0],
-                "email": email,
-                "phone": phone,
-                "password": password,  # ⚠️ à hasher en production
-                "balance": initial_balance,
-                "historique": [
-                    {
-                        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "description": "Bonus inscription",
-                        "montant": 300,
-                        "solde_apres": initial_balance,
-                        "status": "Credité"
-                    }
-                ],
-                "transactions": [],
-                "parrain": parrainage_code if parrainage_code else None,
-                "investments": [],
-                "has_made_first_deposit": False,
-                "date_inscription": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
+        # Création d'un nouvel utilisateur
+        initial_balance = INITIAL_BALANCE + 300  # Bonus inscription
 
-            # Gestion du parrainage
-            if parrainage_code and parrainage_code in users_data:
-                users_data.setdefault(parrainage_code, {}).setdefault('filleuls', [])
-                users_data[parrainage_code]['filleuls'].append(email)
+        new_user = User(
+            username=username or email.split('@')[0],
+            email=email,
+            phone=phone,
+            password=password,  # ⚠️ penser à hasher pour la prod
+            balance=initial_balance,
+            parrain=parrainage_code if parrainage_code else None,
+            has_made_first_deposit=False,
+            date_inscription=datetime.utcnow()
+        )
+        db.session.add(new_user)
+        db.session.commit()  # Commit pour récupérer l'ID utilisateur
 
-            save_users_data(users_data)
+        # Ajouter l'historique du bonus inscription
+        hist_entry = Historique(
+            user_id=new_user.id,
+            date=datetime.utcnow(),
+            description="Bonus inscription",
+            montant=300,
+            type="Crédit",
+            status="Credité",
+            solde_apres=initial_balance
+        )
+        db.session.add(hist_entry)
+        db.session.commit()
 
-            # Connexion automatique après inscription
-            session['email'] = email
-            flash("Inscription réussie ! Vous avez reçu 300 XOF de bonus.", "success")
-            return redirect(url_for('dashboard_page'))
+        # Gestion du parrainage
+        if parrainage_code:
+            parrain = User.query.filter_by(username=parrainage_code).first()
+            if parrain:
+                parrain.filleuls = parrain.filleuls or []
+                parrain.filleuls.append(new_user.email)
+                db.session.commit()
+
+        # Connexion automatique après inscription
+        session['email'] = new_user.email
+        flash("Inscription réussie ! Vous avez reçu 300 XOF de bonus.", "success")
+        return redirect(url_for('dashboard_page'))
 
     return render_template('inscription.html', message=message, referral_code=referral_code)
-
 
 @app.route('/connexion', methods=['GET', 'POST'])
 def connexion():
