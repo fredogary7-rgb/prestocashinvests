@@ -191,31 +191,20 @@ def inscription_page():
     users_data = load_users_data()
 
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
+        username = request.form.get('username')
         email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '').strip()
-        country_code = request.form.get('country_code', '').strip()
-        phone_number = request.form.get('phone_number', '').strip()
+        password = request.form.get('password')
+        phone = request.form.get('phone', '')
         parrainage_code = request.form.get('referral_code', referral_code)
 
-        # ✅ Vérification stricte du nom d'utilisateur
-        import re
-        if not re.fullmatch(r'[a-z0-9]+', username):
-            message = {"type": "error", "text": "Le nom d'utilisateur doit contenir uniquement des lettres minuscules et des chiffres, sans espace."}
-            return render_template('inscription.html', message=message, referral_code=referral_code)
-
-        # ✅ Création du numéro complet
-        phone = f"{country_code}{phone_number}" if country_code and phone_number else ""
-
-        # ✅ Validation basique des champs
-        if not email or not password or not phone:
-            message = {"type": "error", "text": "Tous les champs sont requis (email, mot de passe, téléphone)."}
+        if not email or not password:
+            message = {"type": "error", "text": "Email et mot de passe requis."}
             return render_template('inscription.html', message=message, referral_code=referral_code)
 
         if email in users_data:
             message = {"type": "error", "text": "Cet email est déjà enregistré."}
         else:
-            # ✅ Crédit initial de 300 XOF
+            # Crédit initial de 300 XOF
             initial_balance = INITIAL_BALANCE + 300
 
             users_data[email] = {
@@ -240,19 +229,20 @@ def inscription_page():
                 "date_inscription": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
 
-            # ✅ Gestion du parrainage
+            # Gestion du parrainage
             if parrainage_code and parrainage_code in users_data:
                 users_data.setdefault(parrainage_code, {}).setdefault('filleuls', [])
                 users_data[parrainage_code]['filleuls'].append(email)
 
             save_users_data(users_data)
 
-            # ✅ Connexion automatique après inscription
+            # Connexion automatique après inscription
             session['email'] = email
             flash("Inscription réussie ! Vous avez reçu 300 XOF de bonus.", "success")
             return redirect(url_for('dashboard_page'))
 
     return render_template('inscription.html', message=message, referral_code=referral_code)
+
 
 @app.route('/connexion', methods=['GET', 'POST'])
 def connexion():

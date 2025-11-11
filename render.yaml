@@ -1,10 +1,10 @@
-services:
-  - type: web
-    name: prestocashinvests
-    env: python
-    plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120"
-    envVars:
-      - key: DATABASE_URL
-        value: "postgresql+psycopg://presto_admin_user:j7C6is6xvR3EsV4dG6ph4Ju7NWUMurou@dpg-d45j4kf5r7bs73ajiq20-a.oregon-postgres.render.com/presto_admin"
+type: web
+name: prestocashinvests
+env: python
+plan: free
+buildCommand: "pip install -r requirements.txt"
+startCommand: "gunicorn app:app"
+envVars:
+
+key: DATABASE_URL
+value: "postgresql+psycopg://presto_admin_user:j7C6is6xvR3EsV4dG6ph4Ju7NWUMurou@dpg-d45j4kf5r7bs73ajiq20-a.oregon-postgres.render.com/presto_admin"
