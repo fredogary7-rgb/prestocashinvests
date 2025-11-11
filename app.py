@@ -1690,10 +1690,10 @@ def tasks_page():
         bonus_amount=BONUS_AMOUNT
     )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if not os.path.exists(USERS_FILE):
         with open(USERS_FILE, 'w') as f:
             json.dump({}, f)
 
-    port = int(os.environ.get("PORT", 5000))  # ✅ Récupère le port assigné par Render
-    app.run(host="0.0.0.0", port=port, debug=False)  # ✅ Désactive le mode debug
+    port = int(os.environ.get("PORT", 10000))  # Render demande d'utiliser PORT ou 10000
+    app.run(host="0.0.0.0", port=port, debug=False)
