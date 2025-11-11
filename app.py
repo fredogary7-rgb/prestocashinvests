@@ -886,27 +886,24 @@ def retrait_selection():
     if not user:
         return redirect(url_for('connexion'))
 
-    # --- Calcul du solde total des dépôts acceptés ---
+    # --- Récupère toutes les transactions de l'utilisateur ---
     transactions = Transaction.query.filter_by(user_email=email).all()
+
+    # --- Total des dépôts acceptés (non retirable) ---
     total_deposits = sum(
         t.amount for t in transactions
         if str(t.status).lower() in ['accepté', 'accepted', 'validé']
+        and 'dépôt' in str(t.type).lower()
     )
 
-    # --- Total des investissements actifs ---
-    investissements = getattr(user, 'investissements_vip', []) or []
-    total_investments = sum(
-        i.get('montant', 0) for i in investissements
-        if i.get('status') in ['En cours', 'Active', 'active']
-    )
+    # --- Solde total utilisateur ---
+    total_balance = float(getattr(user, 'balance', 0.0))
 
-    # --- Solde non retirables = dépôts non investis ---
-    non_withdrawable = max(total_deposits - total_investments, 0)
+    # --- Calcul du solde retirable ---
+    # On retire uniquement la partie du solde correspondant aux dépôts
+    withdrawable_balance = max(total_balance - total_deposits, 0.0)
 
-    # --- Solde disponible pour retrait ---
-    total_balance = getattr(user, 'balance', 0.0)
-    withdrawable_balance = max(total_balance - non_withdrawable, 0.0)
-
+    # --- Méthodes de retrait disponibles ---
     methods = [
         "Moov Money", "MTN", "Mix by YAS", "Orange Money",
         "Airtel", "Vodacom", "Crypto BEP20"
@@ -925,30 +922,30 @@ def retrait_selection():
                 flash("⚠️ Solde disponible pour retrait insuffisant.", "danger")
                 return redirect(url_for('retrait_selection'))
 
-            # Calcul frais 10%
+            # --- Calcul frais 10% ---
             frais = round(amount * 0.10, 2)
             net_amount = round(amount - frais, 2)
 
-            # --- Déduire le montant total du solde utilisateur ---
+            # --- Déduction du solde utilisateur ---
             user.balance = round(user.balance - amount, 2)
 
-            # --- Ajouter au Historique le montant net (après frais) ---
+            # --- Enregistrement dans l'historique ---
             hist_entry = Historique(
                 user_id=user.id,
                 date=datetime.utcnow(),
                 description=f"Retrait via {method}",
-                montant=-net_amount,  # négatif car c'est une sortie
-                type='debit',
+                montant=-net_amount,  # négatif car sortie
+                type='Débit',
                 status='En cours',
                 solde_apres=user.balance
             )
             db.session.add(hist_entry)
 
-            # --- Ajouter dans Withdrawal pour admin ---
+            # --- Enregistrement dans la table des retraits ---
             withdrawal_entry = Withdrawal(
                 id=str(uuid.uuid4()),
                 user_email=user.email,
-                amount=amount,  # montant total demandé par l'utilisateur
+                amount=amount,
                 method=method,
                 receiver=getattr(user, 'phone', ''),
                 status='En attente',
@@ -956,7 +953,6 @@ def retrait_selection():
             )
             db.session.add(withdrawal_entry)
 
-            # --- Commit final ---
             db.session.commit()
 
             return render_template(
@@ -978,7 +974,6 @@ def retrait_selection():
         methods=methods,
         withdrawable_balance=withdrawable_balance
     )
-
 
 @app.route('/confirmer_retrait', methods=['POST'])
 def confirmer_retrait():
