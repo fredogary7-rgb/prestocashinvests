@@ -99,62 +99,72 @@
         .copy-btn:hover {
             background-color: #218838;
         }
-    </style>
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Mon Équipe & Parrainage</h1>
+  <div class="container">
+    <h1>Mon Équipe & Parrainage</h1>
 
-        <!-- BLOC DE STATISTIQUES (Le bloc qui doit s'afficher !) -->
-        <p class="section-title">Vos Statistiques d'Équipe</p>
-        <div class="team-stats">
-            <div class="stat-item bg-blue">
-                <h3>{{ team_data.total_membres }}</h3>
-                <p>Membres de votre équipe</p>
-            </div>
-            <div class="stat-item bg-yellow">
-                <h3>{{ team_data.commission_totale }} XOF</h3>
-                <p>Commissions totales</p>
-            </div>
-        </div>
-        <!-- FIN BLOC DE STATISTIQUES -->
+    <!-- 🔹 BLOC DE STATISTIQUES -->
+    <p class="section-title">Vos Statistiques d'Équipe</p>
+    <div class="team-stats">
+      <div class="stat-item bg-blue">
+        <h3>{{ team_data.total_membres }}</h3>
+        <p>Membres de votre équipe</p>
+      </div>
+    </div>
+    <!-- ✅ Case de commission remplacée par lien Telegram -->
+    <a href="https://t.me/+rVJ7Nr9BRk5jMzA0"
+       target="_blank"
+       class="flex items-center space-x-3 p-3 rounded-xl bg-blue-500 text-white text-center mt-4">
+      <i class="ri-telegram-line text-2xl"></i>
+      <span class="text-lg">Rejoindre la communauté Telegram</span>
+    </a>
 
-        <!-- BLOC LIEN DE PARRAINAGE -->
-        <p class="section-title">Lien de Parrainage</p>
-        <div class="referral-box">
-            <p>Partagez ce lien pour inviter de nouveaux membres :</p>
-            <input type="text" id="referral-link" class="referral-link-input" 
-                   value="{{ team_data.lien_parrainage }}" readonly>
-            <button class="copy-btn" onclick="copyLink()">Copier le Lien</button>
-        </div>
-        <!-- FIN BLOC LIEN DE PARRAINAGE -->
-<nav class="space-y-4">
-            <!-- Bouton Communauté WhatsApp (Utilisez votre lien réel ici) -->
-            <a href="https://whatsapp.com/channel/0029VbBotolLikg6P6RSOq1S" target="_blank">
-               class="flex items-center space-x-3 p-3 rounded-xl bg-green-500 text-white font-semibol>
-                <i class="ph-bold ph-whatsapp-logo text-2xl"></i>
-                <span class="text-lg">Communauté Whatsapp</span>
-            </a>
-
-        <br>
-        <a href="{{ url_for('dashboard_page') }}" class="copy-btn" style="display: block; text-align: center; background-color: #6c757d;">Retour au Tableau de Bord</a>
+    <!-- 🔹 Lien de Parrainage -->
+    <p class="section-title">Lien de Parrainage</p>
+    <div class="referral-box">
+      <p>Partagez ce lien pour inviter de nouveaux membres :</p>
+      <input type="text"
+             id="referral-link"
+             class="referral-link-input"
+             value="{{ team_data.lien_parrainage }}"
+             readonly>
+      <button class="copy-btn" onclick="copyLink()">Copier le Lien</button>
     </div>
 
-    <script>
-        function copyLink() {
-            var copyText = document.getElementById("referral-link");
-            
-            // Sélectionnez le texte
-            copyText.select();
-            copyText.setSelectionRange(0, 99999); /* Pour les mobiles */
-            
-            // Copiez le texte dans le presse-papiers (solution compatible iframe)
-            document.execCommand('copy');
-            
-            alert("Lien de parrainage copié : " + copyText.value);
-        }
-    </script>
+    <!-- 🔹 Boutons Communautés -->
+    <nav class="space-y-4">
+      <!-- Bouton WhatsApp -->
+      <a href="https://whatsapp.com/channel/0029VbBotolLikg6P6RSOq1S"
+         target="_blank"
+         class="flex items-center space-x-3 p-3 rounded-xl bg-green-500 text-white text-center mt-4">
+        <i class="ri-whatsapp-line text-2xl"></i>
+        <span class="text-lg">Rejoindre la communauté WhatsApp</span>
+      </a>
+
+      <!-- Bouton Telegram -->
+      <a href="https://t.me/+rVJ7Nr9BRk5jMzA0"
+         target="_blank"
+         class="flex items-center space-x-3 p-3 rounded-xl bg-blue-500 text-white text-center mt-2">
+        <i class="ri-telegram-line text-2xl"></i>
+        <span class="text-lg">Rejoindre la communauté Telegram</span>
+      </a>
+    </nav>
+
+    <br>
+    <a href="{{ url_for('dashboard_page') }}" class="copy-btn" style="display: block;">← Retour au Tableau de Bord</a>
+  </div>
+
+  <script>
+    function copyLink() {
+      var copyText = document.getElementById("referral-link");
+      copyText.select();
+      copyText.setSelectionRange(0, 99999); // Mobile compatible
+      document.execCommand("copy");
+      alert("✅ Lien de parrainage copié : " + copyText.value);
+    }
+  </script>
 </body>
 </html>
-
 
