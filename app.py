@@ -198,6 +198,12 @@ def inscription_page():
         phone_number = request.form.get('phone_number', '').strip()
         parrainage_code = request.form.get('referral_code', referral_code)
 
+        # ✅ Vérification stricte du nom d'utilisateur
+        import re
+        if not re.fullmatch(r'[a-z0-9]+', username):
+            message = {"type": "error", "text": "Le nom d'utilisateur doit contenir uniquement des lettres minuscules et des chiffres, sans espace."}
+            return render_template('inscription.html', message=message, referral_code=referral_code)
+
         # ✅ Création du numéro complet
         phone = f"{country_code}{phone_number}" if country_code and phone_number else ""
 
@@ -246,9 +252,7 @@ def inscription_page():
             flash("Inscription réussie ! Vous avez reçu 300 XOF de bonus.", "success")
             return redirect(url_for('dashboard_page'))
 
-    # ✅ Correction de la dernière ligne : variable mal orthographiée
     return render_template('inscription.html', message=message, referral_code=referral_code)
-
 
 @app.route('/connexion', methods=['GET', 'POST'])
 def connexion():

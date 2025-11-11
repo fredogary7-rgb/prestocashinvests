@@ -53,8 +53,10 @@
             <p class="intro">Bienvenue sur PRESTO CASH ! Veuillez remplir les champs ci-dessous.</p>
 
             <form action="/inscription" method="POST">
+                <!-- ✅ Vérification stricte du nom d'utilisateur -->
                 <label for="username">Nom d'utilisateur *</label>
                 <input type="text" id="username" name="username" placeholder="Entrez votre nom d'utilisateur" required>
+                <small class="error-msg" id="username_error"></small>
 
                 <label for="email">Adresse e-mail *</label>
                 <input type="email" id="email" name="email" placeholder="Entrez votre adresse e-mail" required>
@@ -82,17 +84,6 @@
                         <option value="+234">🇳🇬 Nigeria (+234)</option>
                         <option value="+255">🇹🇿 Tanzanie (+255)</option>
                         <option value="+235">🇹🇩 Tchad (+235)</option>
-                        <option value="+66">🇹🇭 Thaïlande (+66)</option>
-                        <option value="+260">🇿🇲 Zambie (+260)</option>
-                        <option value="+263">🇿🇼 Zimbabwe (+263)</option>
-                        <option value="+265">🇲🇼 Malawi (+265)</option>
-                        <option value="+960">🇲🇻 Maldives (+960)</option>
-                        <option value="+211">🇸🇸 Soudan du Sud (+211)</option>
-                        <option value="+240">🇬🇶 Guinée équatoriale (+240)</option>
-                        <option value="+257">🇧🇮 Burundi (+257)</option>
-                        <option value="+855">🇰🇭 Cambodge (+855)</option>
-                        <option value="+856">🇱🇦 Laos (+856)</option>
-                        <option value="+256">🇺🇬 Ouganda (+256)</option>
                     </select>
                     <input type="tel" id="phone_number" name="phone_number" placeholder="Entrez votre numéro" required>
                     <small class="error-msg" id="phone_error"></small>
@@ -118,14 +109,34 @@
         </div>
     </div>
 
-    <!-- ✅ Script validation téléphone -->
+    <!-- ✅ Script validation -->
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const form = document.querySelector("form");
+        const usernameInput = document.getElementById("username");
+        const usernameError = document.getElementById("username_error");
         const countrySelect = document.getElementById("country_code");
         const phoneInput = document.getElementById("phone_number");
-        const errorMsg = document.getElementById("phone_error");
+        const phoneError = document.getElementById("phone_error");
 
+        // 📌 Validation du nom d'utilisateur
+        function validateUsername() {
+            const username = usernameInput.value.trim();
+            const regex = /^[a-z0-9]+$/; // uniquement minuscules et chiffres
+
+            if (!regex.test(username)) {
+                usernameError.textContent = "Le nom d'utilisateur doit contenir uniquement des lettres minuscules et/ou chiffres (sans espace ni majuscule).";
+                usernameError.style.display = "block";
+                return false;
+            }
+
+            usernameError.style.display = "none";
+            return true;
+        }
+
+        usernameInput.addEventListener("input", validateUsername);
+
+        // 📱 Validation du numéro
         const phoneLengths = {
             "+228": 8, "+229": 8, "+225": 10, "+237": 9, "+223": 8,
             "+241": 8, "+221": 9, "+226": 8, "+242": 9, "+243": 9,
@@ -137,18 +148,15 @@
             const number = phoneInput.value.trim();
             const requiredLength = phoneLengths[code];
 
-            if (!requiredLength) {
-                errorMsg.style.display = "none";
-                return true;
-            }
+            if (!requiredLength) return true;
 
             if (number.length !== requiredLength || !/^\d+$/.test(number)) {
-                errorMsg.textContent = `Le numéro doit contenir ${requiredLength} chiffres valides pour ${countrySelect.options[countrySelect.selectedIndex].text}.`;
-                errorMsg.style.display = "block";
+                phoneError.textContent = `Le numéro doit contenir ${requiredLength} chiffres valides pour ${countrySelect.options[countrySelect.selectedIndex].text}.`;
+                phoneError.style.display = "block";
                 return false;
             }
 
-            errorMsg.style.display = "none";
+            phoneError.style.display = "none";
             return true;
         }
 
@@ -156,9 +164,12 @@
         countrySelect.addEventListener("change", validatePhone);
 
         form.addEventListener("submit", function(event) {
-            if (!validatePhone()) {
+            const validUser = validateUsername();
+            const validPhone = validatePhone();
+
+            if (!validUser || !validPhone) {
                 event.preventDefault();
-                alert("Veuillez corriger le numéro de téléphone avant de continuer.");
+                alert("Veuillez corriger les erreurs avant de continuer.");
             }
         });
     });
