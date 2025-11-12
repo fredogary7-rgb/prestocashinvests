@@ -21,13 +21,10 @@
 
     <form method="POST" action="{{ url_for('confirmer_retrait') }}" class="space-y-6 animate-fadeSlideUp">
         <!-- Pays -->
-        <div>
-            <label for="country" class="block text-sm font-medium text-gray-700 mb-2">Pays</label>
+        <div>                                                                                                                                                                                   <label for="country" class="block text-sm font-medium text-gray-700 mb-2">Pays</label>
             <select id="country" name="country" required
-                    class="w-full px-5 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500
-                           transition-all duration-300 transform hover:scale-[1.01] bg-gray-50">
-                <option value="">Sélectionner un pays</option>
-                <option value="Benin">Bénin</option>
+                    class="w-full px-5 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-yellow-500 focus:border-yellow-500                                                                          transition-all duration-300 transform hover:scale-[1.01] bg-gray-50">
+                <option value="">Sélectionner un pays</option>                                                                                                                                      <option value="Benin">Bénin</option>
                 <option value="Togo">Togo</option>
                 <option value="Burkina Faso">Burkina Faso</option>
                 <option value="Cameroun">Cameroun</option>
@@ -139,3 +136,4 @@ function enableEdit() {
 }
 </script>
 {% endblock %}
+
