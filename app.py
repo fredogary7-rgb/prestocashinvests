@@ -786,11 +786,11 @@ def produits_rapide_page():
         Transaction.status == 'accepted'
     ).scalar() or 0
 
-    eligible_rapide = total_depots >= 9000
+    eligible_rapide = total_depots >= 90000
 
     # ✅ Si pas encore éligible
     if not eligible_rapide:
-        flash("Vous devez d'abord effectuer un dépôt d'au moins 9000 XOF pour accéder à ces produits.", "warning")
+        flash("Vous devez d'abord effectuer un dépôt d'au moins 90000 XOF pour accéder à ces produits.", "warning")
         return render_template('produits_bloque.html', user_info=user)
 
     # ✅ Sinon affiche les produits rapides
