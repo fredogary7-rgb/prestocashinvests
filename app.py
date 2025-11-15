@@ -28,6 +28,37 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db.init_app(app)
 
+def verifier_investissements():
+    with app.app_context():
+        now = datetime.utcnow()
+        investissements = Investissement.query.filter_by(status="En cours").all()
+
+        for inv in investissements:
+            fin = inv.date_debut + timedelta(days=inv.duree_jours)
+
+            if now >= fin:
+                # Créditer le rendement
+                user = User.query.filter_by(email=inv.user_email).first()
+                if user:
+                    user.balance += inv.rendement_total
+
+                    # Mettre à jour l'investissement
+                    inv.status = "Terminé"
+
+                    # Historique
+                    hist = Historique(
+                        user_id=user.id,
+                        date=now,
+                        description=f"Investissement terminé - {inv.nom}",
+                        montant=inv.rendement_total,
+                        type="Crédit",
+                        status="Terminé",
+                        solde_apres=user.balance
+                    )
+                    db.session.add(hist)
+
+        db.session.commit()
+
 BONUS_PARRAINAGE = 50.0
 INITIAL_BALANCE = 0.0
 VIP_DURATION_DAYS = 60
@@ -758,8 +789,29 @@ VIP_PRODUITS = {
         'rendement_total': 27000,
         'description': "La voie rapide vers des gains significatifs.",
         'image_url': 'pro.png',
+    },
+    'VIP25K': {
+        'id': 'VIP25K',
+        'nom': 'VIP Premium',
+        'montant_min': 25000,
+        'duree_jours': 5,
+        'revenu_quotidien': 9000,
+        'rendement_total': 45000,
+        'description': "Un plan rapide et puissant, parfait pour avancer.",
+        'image_url': 'premium.png',
+    },
+    'VIP35K': {
+        'id': 'VIP35K',
+        'nom': 'VIP Ultime',
+        'montant_min': 35000,
+        'duree_jours': 5,
+        'revenu_quotidien': 12600,
+        'rendement_total': 63000,
+        'description': "Maximisez vos gains avec cette offre express.",
+        'image_url': 'ultime.png',
     }
 }
+
 
 # ----------------------------
 # PAGE DES PRODUITS RAPIDES
@@ -786,11 +838,11 @@ def produits_rapide_page():
         Transaction.status == 'accepted'
     ).scalar() or 0
 
-    eligible_rapide = total_depots >= 90000
+    eligible_rapide = total_depots >= 6000
 
     # ✅ Si pas encore éligible
     if not eligible_rapide:
-        flash("Vous devez d'abord effectuer un dépôt d'au moins 90000 XOF pour accéder à ces produits.", "warning")
+        flash("Vous devez d'abord effectuer un dépôt d'au moins 6000 XOF pour accéder à ces produits.", "warning")
         return render_template('produits_bloque.html', user_info=user)
 
     # ✅ Sinon affiche les produits rapides
@@ -1689,6 +1741,7 @@ def tasks_page():
         bonus_claimed_today=bonus_claimed_today,
         bonus_amount=BONUS_AMOUNT
     )
+
 
 if __name__ == "__main__":
     if not os.path.exists(USERS_FILE):

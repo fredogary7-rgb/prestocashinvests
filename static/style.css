@@ -307,3 +307,33 @@ input, select {
   transform: scale(1.05);
   transition: 0.2s;
 }
+
+/* 🟦 Texte défilant horizontalement */
+.scroll-horizontal {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 10px 0;
+  margin-top: 10px;
+}
+
+.scroll-horizontal p {
+  display: inline-block;
+  color: #0a2d6b;
+  font-weight: 600;
+  font-size: 0.95em;
+  animation: scroll-left 15s linear infinite;
+}
+
+/* Animation pour faire défiler le texte */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
